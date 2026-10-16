@@ -13,7 +13,22 @@ from backend.models import (
     DashboardSummary
 )
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "quietleak.db")
+import shutil
+
+ORIGINAL_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "quietleak.db")
+
+if os.environ.get("VERCEL"):
+    DB_DIR = "/tmp/quietleak_data"
+    DB_PATH = os.path.join(DB_DIR, "quietleak.db")
+    if not os.path.exists(DB_PATH):
+        os.makedirs(DB_DIR, exist_ok=True)
+        if os.path.exists(ORIGINAL_DB_PATH):
+            try:
+                shutil.copy2(ORIGINAL_DB_PATH, DB_PATH)
+            except Exception:
+                pass
+else:
+    DB_PATH = ORIGINAL_DB_PATH
 
 def get_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)

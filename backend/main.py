@@ -57,6 +57,12 @@ FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fronten
 
 # --- API Endpoints ---
 
+@app.get("/api", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
+def api_health():
+    """Health check endpoint for Vercel and monitoring."""
+    return {"status": "ok", "service": "QuietLeak API", "version": "1.0.0"}
+
 @app.get("/api/dashboard", response_model=DashboardSummary, tags=["Dashboard"])
 def get_dashboard():
     """Returns centrally calculated recurring metrics, category spend, upcoming renewals, and transparent leak detection."""

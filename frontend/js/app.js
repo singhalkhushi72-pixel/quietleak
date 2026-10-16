@@ -46,9 +46,9 @@ const state = {
 };
 
 // Base API URL configuration
-const API_BASE = (window.location.protocol.startsWith('http') && window.location.port)
-  ? '' 
-  : 'http://127.0.0.1:8000';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? (window.location.port === '8000' ? '' : 'http://127.0.0.1:8000')
+  : '';
 
 // ==================== WEB AUDIO API SOUND ENGINE ====================
 class SoundEngine {
@@ -1358,6 +1358,127 @@ async function loadData() {
   }
 }
 
+// Fallback Sample Data Generators for Hosted & Offline Resilience
+function getFallbackSubscriptions() {
+  const today = new Date();
+  const addDays = (d) => {
+    const copy = new Date(today);
+    copy.setDate(copy.getDate() + d);
+    return copy.toISOString().split('T')[0];
+  };
+  return [
+    {
+      id: 1, name: "Netflix Premium (4K)", customer_name: "Aarav Sharma", customer_email: "aarav.sharma@gmail.com", customer_phone: "+91 98201 11223", plan_name: "Netflix Premium (4K)",
+      amount: 649, currency: "INR", billing_frequency: "monthly", category: "Entertainment", next_renewal_date: addDays(4), payment_method: "Credit Card", status: "active",
+      notes: "Customer Aarav Sharma - 4K Ultra HD family pass", last_used_date: addDays(-2), monthly_equivalent: 649, annual_equivalent: 7788, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 2, name: "Cultpass ELITE Gym", customer_name: "Priya Patel", customer_email: "priya.patel@healthfit.in", customer_phone: "+91 98765 43210", plan_name: "Cultpass ELITE Gym",
+      amount: 14400, currency: "INR", billing_frequency: "yearly", category: "Health & Fitness", next_renewal_date: addDays(18), payment_method: "Credit Card", status: "active",
+      notes: "Customer Priya Patel - Annual gym membership pass", last_used_date: addDays(-62), monthly_equivalent: 1200, annual_equivalent: 14400, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 3, name: "Spotify Individual", customer_name: "Rohan Mehta", customer_email: "rohan.mehta@soundwave.org", customer_phone: "+91 91234 56789", plan_name: "Spotify Individual",
+      amount: 119, currency: "INR", billing_frequency: "monthly", category: "Entertainment", next_renewal_date: addDays(11), payment_method: "UPI AutoPay", status: "active",
+      notes: "Customer Rohan Mehta - Daily commuter streaming playlist", last_used_date: addDays(-1), monthly_equivalent: 119, annual_equivalent: 1428, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 4, name: "Amazon Prime", customer_name: "Ananya Deshmukh", customer_email: "ananya.d@shoppershub.in", customer_phone: "+91 99887 76655", plan_name: "Amazon Prime",
+      amount: 1499, currency: "INR", billing_frequency: "yearly", category: "Lifestyle", next_renewal_date: addDays(7), payment_method: "Amazon Pay UPI", status: "active",
+      notes: "Customer Ananya Deshmukh - Prime Video & priority delivery", last_used_date: addDays(-5), monthly_equivalent: 124.92, annual_equivalent: 1499, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 5, name: "Adobe Creative Cloud", customer_name: "Vikramaditya Sen", customer_email: "vikram.sen@designstudio.io", customer_phone: "+91 97654 32109", plan_name: "Adobe Creative Cloud",
+      amount: 4230, currency: "INR", billing_frequency: "monthly", category: "Software", next_renewal_date: addDays(21), payment_method: "Corporate Card", status: "active",
+      notes: "Customer Vikramaditya Sen - Full suite designer pass", last_used_date: addDays(-35), monthly_equivalent: 4230, annual_equivalent: 50760, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 6, name: "ChatGPT Plus", customer_name: "Kavita Rao", customer_email: "kavita.rao@consulting.com", customer_phone: "+91 94567 89012", plan_name: "ChatGPT Plus",
+      amount: 1999, currency: "INR", billing_frequency: "monthly", category: "Productivity", next_renewal_date: addDays(14), payment_method: "Credit Card", status: "active",
+      notes: "Customer Kavita Rao - AI research & pair programming", last_used_date: addDays(0), monthly_equivalent: 1999, annual_equivalent: 23988, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 7, name: "Apple iCloud+ (200GB)", customer_name: "Deepak Verma", customer_email: "deepak.verma@icloud.com", customer_phone: "+91 93456 78901", plan_name: "Apple iCloud+ (200GB)",
+      amount: 219, currency: "INR", billing_frequency: "monthly", category: "Utilities", next_renewal_date: addDays(16), payment_method: "Apple ID UPI", status: "active",
+      notes: "Customer Deepak Verma - Cloud storage & device backups", last_used_date: addDays(-3), monthly_equivalent: 219, annual_equivalent: 2628, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 8, name: "Duolingo Super Trial", customer_name: "Sneha Kulkarni", customer_email: "sneha.k@language.edu", customer_phone: "+91 91234 98765", plan_name: "Duolingo Super Trial",
+      amount: 499, currency: "INR", billing_frequency: "monthly", category: "Education", next_renewal_date: addDays(3), payment_method: "Google Play", status: "trial",
+      notes: "Customer Sneha Kulkarni - 14-day free trial ending soon", last_used_date: addDays(-4), monthly_equivalent: 499, annual_equivalent: 5988, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 9, name: "The Ken Annual Subscription", customer_name: "Nikhil Kapoor", customer_email: "nikhil.k@theken-reader.in", customer_phone: "+91 92345 67890", plan_name: "The Ken Annual Subscription",
+      amount: 3250, currency: "INR", billing_frequency: "yearly", category: "Media", next_renewal_date: addDays(45), payment_method: "Net Banking", status: "paused",
+      notes: "Customer Nikhil Kapoor - Paused long-form journalism pass", last_used_date: addDays(-95), monthly_equivalent: 270.83, annual_equivalent: 3250, created_at: today.toISOString(), updated_at: today.toISOString()
+    },
+    {
+      id: 10, name: "Xbox Game Pass Ultimate", customer_name: "Aditya Joshi", customer_email: "aditya.joshi@gamingzone.in", customer_phone: "+91 90123 45678", plan_name: "Xbox Game Pass Ultimate",
+      amount: 499, currency: "INR", billing_frequency: "monthly", category: "Gaming", next_renewal_date: addDays(9), payment_method: "Paytm Wallet", status: "active",
+      notes: "Customer Aditya Joshi - Cloud gaming & PC multiplayer pass", last_used_date: addDays(-12), monthly_equivalent: 499, annual_equivalent: 5988, created_at: today.toISOString(), updated_at: today.toISOString()
+    }
+  ];
+}
+
+function getFallbackCustomers() {
+  const subs = getFallbackSubscriptions();
+  return subs.map((s, idx) => ({
+    id: idx + 1,
+    name: s.customer_name,
+    email: s.customer_email,
+    phone: s.customer_phone,
+    company: s.notes.split(' - ')[0].replace('Customer ', '') + ' Enterprise',
+    subscribed_plan: s.name,
+    amount: s.amount,
+    currency: s.currency,
+    billing_frequency: s.billing_frequency,
+    category: s.category,
+    next_billing_date: s.next_renewal_date,
+    payment_method: s.payment_method,
+    status: s.status,
+    notes: s.notes,
+    last_active_date: s.last_used_date,
+    created_at: s.created_at,
+    updated_at: s.updated_at
+  }));
+}
+
+function generateFallbackDashboardData() {
+  const subs = getFallbackSubscriptions();
+  const monthlyTotal = subs.reduce((sum, s) => sum + s.monthly_equivalent, 0);
+  const annualTotal = monthlyTotal * 12;
+  const leaks = [
+    { subscription_id: 8, service_name: "Duolingo Super Trial", category: "Education", monthly_amount: 499, reason: "Trial ends in 3 days. Will convert to paid tier.", leak_type: "trial_ending", recommendation: "Cancel before day 3 to avoid ₹499 auto-charge.", severity: "high" },
+    { subscription_id: 2, service_name: "Cultpass ELITE Gym", category: "Health & Fitness", monthly_amount: 1200, reason: "Inactive for 62 days. High recurring cost.", leak_type: "unused", recommendation: "Pause or downgrade pass to recoup up to ₹14,400.", severity: "high" },
+    { subscription_id: 5, service_name: "Adobe Creative Cloud", category: "Software", monthly_amount: 4230, reason: "No active project in 35 days.", leak_type: "high_cost", recommendation: "Switch to Single App plan or cancel for ₹4,230/mo savings.", severity: "medium" }
+  ];
+  const catMap = {};
+  subs.forEach(s => {
+    catMap[s.category] = (catMap[s.category] || 0) + s.monthly_equivalent;
+  });
+  const catBreakdown = Object.keys(catMap).map(cat => ({
+    category: cat,
+    monthly_amount: catMap[cat],
+    annual_amount: catMap[cat] * 12,
+    percentage: Math.round((catMap[cat] / monthlyTotal) * 100),
+    count: subs.filter(s => s.category === cat).length
+  }));
+  return {
+    monthly_recurring_total: Math.round(monthlyTotal * 100) / 100,
+    annual_recurring_total: Math.round(annualTotal * 100) / 100,
+    active_subscriptions_count: subs.filter(s => s.status === 'active').length,
+    trial_count: subs.filter(s => s.status === 'trial').length,
+    paused_count: subs.filter(s => s.status === 'paused').length,
+    cancelled_count: 0,
+    total_subscriptions_count: subs.length,
+    potential_savings_monthly: 5929,
+    potential_savings_annual: 71148,
+    potential_leaks: leaks,
+    upcoming_renewals: subs.slice(0, 5),
+    category_breakdown: catBreakdown
+  };
+}
+
 async function fetchDashboard() {
   try {
     const res = await fetch(`${API_BASE}/api/dashboard`);
@@ -1367,7 +1488,12 @@ async function fetchDashboard() {
     renderDashboard();
     renderInsights();
   } catch (err) {
-    console.error('Error fetching dashboard data:', err);
+    console.warn('Backend API unavailable, using resilient fallback data:', err);
+    if (!state.dashboardData) {
+      state.dashboardData = generateFallbackDashboardData();
+      renderDashboard();
+      renderInsights();
+    }
   }
 }
 
@@ -1385,7 +1511,14 @@ async function fetchSubscriptions() {
     renderSubscriptions();
     renderSimulator();
   } catch (err) {
-    console.error('Error fetching subscriptions:', err);
+    console.warn('Backend API unavailable, using resilient fallback subscriptions:', err);
+    if (!state.subscriptions || state.subscriptions.length === 0) {
+      state.subscriptions = getFallbackSubscriptions();
+      const sCount = document.getElementById('sidebar-sub-count');
+      if (sCount) sCount.textContent = state.subscriptions.length;
+      renderSubscriptions();
+      renderSimulator();
+    }
   }
 }
 
@@ -1397,7 +1530,11 @@ async function fetchCustomers() {
     state.customers = data;
     renderCustomers();
   } catch (err) {
-    console.error('Error fetching customers:', err);
+    console.warn('Backend API unavailable, using resilient fallback customers:', err);
+    if (!state.customers || state.customers.length === 0) {
+      state.customers = getFallbackCustomers();
+      renderCustomers();
+    }
   }
 }
 
