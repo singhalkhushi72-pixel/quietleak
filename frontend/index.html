@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuietLeak — Personal Finance & Subscription Leak Finder</title>
+  <meta name="description" content="Discover forgotten subscriptions, track recurring expenses, identify potential leaks, and uncover savings with QuietLeak.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- 
+    Tailwind CSS via Play CDN:
+    Note for classroom prototype: We use the Tailwind Play CDN here for rapid prototyping and zero-build ease.
+    For a production deployment, replace this with a pre-compiled, purged CSS bundle.
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'deep-teal': '#124E52',
+            'deep-teal-hover': '#0B3639',
+            'deep-teal-light': '#E8F3F1',
+            'tangerine': '#FF873D',
+            'tangerine-hover': '#E86E24',
+            'tangerine-light': '#FFF0E5',
+            'warm-cream': '#FFF5E8',
+            'mint': '#A8DDD0',
+            'mint-light': '#E9F7F4',
+            'charcoal': '#253536',
+            'muted-grey': '#718482',
+            'soft-peach': '#FFE0CB',
+            'white': '#FFFFFF',
+            // Legacy aliases for backward test compatibility
+            'warm-ivory': '#FFF5E8',
+            'coral': '#FF873D',
+            'coral-hover': '#E86E24',
+            'coral-light': '#FFF0E5',
+            'lime': '#A8DDD0',
+            'lime-hover': '#92CABE',
+            'lime-light': '#E9F7F4',
+            'lavender': '#FFE0CB',
+            'lavender-light': '#FFF5E8',
+            'dark-ink': '#253536',
+            'dark-ink-muted': '#718482',
+            'soft-grey': '#CBDAD8',
+            'soft-grey-light': '#F0F4F4'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          borderRadius: {
+            '2xl': '1rem',
+            '3xl': '1.5rem',
+            '4xl': '2rem',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Early Theme Engine Initialization (Prevents FOUC) -->
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('quietleak_theme') || 'light';
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (savedTheme === 'system' && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom Design System Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[#FFF5E8] text-[#253536] min-h-screen flex flex-col antialiased selection:bg-[#FF873D] selection:text-white">
+
+  <!-- Celebration Confetti Canvas Overlay -->
+  <canvas id="celebration-canvas" aria-hidden="true"></canvas>
+
+  <!-- ==================== DESKTOP TOP NAVIGATION HEADER ==================== -->
+  <header class="hidden md:flex items-center justify-between px-6 lg:px-10 py-3.5 bg-white/95 backdrop-blur border-b border-[#CBDAD8]/60 sticky top-0 z-30 select-none shadow-xs">
+    <!-- Left: Brand Logo & Wordmark -->
+    <div class="flex items-center space-x-3 cursor-pointer group shrink-0" onclick="navigateTo('dashboard')" tabindex="0" role="button" aria-label="Go to Home Dashboard">
+      <div class="w-10 h-10 rounded-2xl bg-[#124E52] flex items-center justify-center text-white shadow-md shadow-[#124E52]/20 transition-transform group-hover:scale-105">
+        <!-- Droplet + Coin Custom Logo SVG -->
+        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="#FFF5E8" opacity="0.3"/>
+          <path d="M12 2.69l4.95 4.95a7 7 0 1 1-9.9 0z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="12" cy="14" r="3" fill="#FF873D"/>
+          <path d="M11 13h2v2h-2z" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <div>
+        <span class="text-xl font-extrabold tracking-tight text-[#124E52] flex items-center">
+          Quiet<span class="text-[#FF873D]">Leak</span>
+        </span>
+        <span class="text-[10px] font-semibold text-[#718482] tracking-widest uppercase block -mt-0.5">Subscription Guard</span>
+      </div>
+    </div>
+
+    <!-- Center: Desktop Navigation Menu Pills -->
+    <nav class="flex items-center space-x-1.5 p-1 bg-[#F0F4F4] border border-[#CBDAD8]/60 rounded-2xl" aria-label="Main Navigation">
+      <button id="nav-btn-dashboard" onclick="navigateTo('dashboard')" class="nav-item flex items-center space-x-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 bg-[#124E52] text-white shadow-sm">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        <span>Home Dashboard</span>
+      </button>
+
+      <button id="nav-btn-subscriptions" onclick="navigateTo('subscriptions')" class="nav-item flex items-center space-x-2 px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-[#718482] hover:bg-white hover:text-[#124E52]">
+        <i data-lucide="credit-card" class="w-4 h-4"></i>
+        <span>Subscriptions</span>
+        <span id="sidebar-sub-count" class="text-[11px] font-extrabold px-2 py-0.5 bg-[#E8F3F1] text-[#124E52] rounded-full">0</span>
+      </button>
+
+      <button id="nav-btn-insights" onclick="navigateTo('insights')" class="nav-item flex items-center space-x-2 px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-[#718482] hover:bg-white hover:text-[#124E52]">
+        <i data-lucide="pie-chart" class="w-4 h-4"></i>
+        <span>Insights & Leaks</span>
+      </button>
+
+      <button id="nav-btn-profile" onclick="navigateTo('profile')" class="nav-item flex items-center space-x-2 px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-[#718482] hover:bg-white hover:text-[#124E52]">
+        <i data-lucide="sliders" class="w-4 h-4"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <!-- Right: Mascot Assistant Trigger, Outflow Pill, Profile & Add CTA -->
+    <div class="flex items-center space-x-3 shrink-0">
+      <!-- Mini Pip Assistant Trigger Widget -->
+      <div id="pip-sidebar-trigger" onclick="openPipAssistant()" class="px-3 py-1.5 bg-[#FFF0E5] border border-[#FF873D]/40 rounded-2xl flex items-center space-x-2.5 cursor-pointer hover:shadow-md hover:border-[#FF873D] transition-all btn-press group select-none" role="button" tabindex="0" aria-label="Open Pip Financial Assistant">
+        <div id="pip-sidebar-avatar" class="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-xs border border-[#FF873D]/30 group-hover:scale-110 transition-transform">
+          <!-- Mini Pip SVG injected dynamically -->
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center space-x-1">
+            <span class="text-xs font-black text-[#253536]">Ask Pip</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#124E52] animate-pulse"></span>
+          </div>
+          <p id="pip-sidebar-status" class="text-[9.5px] text-[#718482] truncate">Money Detective</p>
+        </div>
+      </div>
+
+      <!-- Outflow Pill Widget -->
+      <div class="px-3 py-1.5 bg-white rounded-2xl border border-[#CBDAD8]/60 flex items-center space-x-2 shadow-xs">
+        <span class="text-[10px] font-bold text-[#718482] uppercase tracking-wider">Outflow</span>
+        <div id="sidebar-monthly-total" class="text-xs font-black text-[#124E52]">₹0</div>
+      </div>
+
+      <!-- Sound Quick Toggle Button -->
+      <button id="sound-toggle-desktop" onclick="toggleSound()" class="w-8 h-8 rounded-xl bg-white border border-[#CBDAD8]/60 text-[#718482] hover:text-[#FF873D] hover:border-[#FF873D] flex items-center justify-center transition-all shadow-xs btn-press" title="Toggle Sound Effects" aria-label="Toggle sound">
+        <i data-lucide="volume-2" id="sound-icon-desktop" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Theme Quick Toggle Button -->
+      <button id="theme-toggle-desktop" onclick="toggleTheme()" class="w-8 h-8 rounded-xl bg-white border border-[#CBDAD8]/60 text-[#718482] hover:text-[#FF873D] hover:border-[#FF873D] flex items-center justify-center transition-all shadow-xs btn-press" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+        <i data-lucide="moon" id="theme-icon-desktop" class="w-4 h-4"></i>
+      </button>
+
+      <!-- User Profile & Account Dropdown Trigger -->
+      <div id="header-user-btn" onclick="openAccountModal()" class="flex items-center space-x-2 cursor-pointer p-1.5 rounded-2xl hover:bg-[#F0F4F4] transition-colors border border-transparent hover:border-[#CBDAD8]/60 group" role="button" tabindex="0" title="Manage Accounts & Session">
+        <div class="w-8 h-8 rounded-xl bg-[#FFE0CB] text-[#124E52] font-black flex items-center justify-center text-xs shadow-inner" id="sidebar-user-avatar">
+          K
+        </div>
+        <div class="hidden lg:flex flex-col text-left">
+          <span id="sidebar-user-name" class="text-xs font-extrabold text-[#253536] leading-tight">Khush</span>
+          <span id="sidebar-user-role" class="text-[9.5px] text-[#718482] leading-none group-hover:text-[#FF873D]">Personal ▼</span>
+        </div>
+      </div>
+
+      <!-- Add Subscription CTA Button -->
+      <button onclick="openSubscriptionModal()" class="py-2 px-4 bg-[#FF873D] hover:bg-[#E86E24] text-white font-extrabold text-xs rounded-xl shadow-md shadow-[#FF873D]/25 flex items-center space-x-1.5 transition-all duration-200 btn-press group">
+        <i data-lucide="plus" class="w-4 h-4 transition-transform group-hover:rotate-90"></i>
+        <span>Add</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="flex-1 flex flex-col min-w-0 pb-28 md:pb-12 overflow-x-hidden">
+
+    <!-- Mobile Top App Bar -->
+    <header class="md:hidden flex items-center justify-between px-5 py-4 bg-white/90 backdrop-blur border-b border-[#E7E9E1] sticky top-0 z-20">
+      <div class="flex items-center space-x-2.5" onclick="navigateTo('dashboard')" role="button" tabindex="0">
+        <div class="w-8 h-8 rounded-xl bg-[#FF6B4A] flex items-center justify-center text-white shadow-sm">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+        </div>
+        <span class="font-extrabold text-lg tracking-tight">Quiet<span class="text-[#FF6B4A]">Leak</span></span>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button id="sound-toggle-mobile" onclick="toggleSound()" class="w-9 h-9 rounded-xl bg-white border border-[#E7E9E1] text-[#718482] hover:text-[#FF873D] flex items-center justify-center shadow-xs btn-press" title="Toggle Sound Effects" aria-label="Toggle sound">
+          <i data-lucide="volume-2" id="sound-icon-mobile" class="w-4 h-4"></i>
+        </button>
+        <button id="theme-toggle-mobile" onclick="toggleTheme()" class="w-9 h-9 rounded-xl bg-white border border-[#E7E9E1] text-[#718482] hover:text-[#FF873D] flex items-center justify-center shadow-xs btn-press" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+          <i data-lucide="moon" id="theme-icon-mobile" class="w-4 h-4"></i>
+        </button>
+        <button id="pip-mobile-trigger" onclick="openPipAssistant()" class="w-9 h-9 rounded-xl bg-[#F4FDE5] border border-[#C8F169] flex items-center justify-center shadow-xs btn-press relative" aria-label="Open Pip Assistant">
+          <div id="pip-mobile-avatar" class="w-7 h-7 flex items-center justify-center"></div>
+          <span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#FF6B4A] border-2 border-white"></span>
+        </button>
+        <button onclick="openSubscriptionModal()" class="w-9 h-9 rounded-xl bg-[#FF6B4A] text-white flex items-center justify-center shadow-md btn-press" aria-label="Add Subscription">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </button>
+        <button id="mobile-user-btn" onclick="openAccountModal()" class="w-9 h-9 rounded-xl bg-[#FFE0CB] text-[#124E52] font-bold flex items-center justify-center text-xs btn-press" aria-label="Account Profile & Session">
+          <span id="mobile-user-avatar">K</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT CONTAINER -->
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-8 space-y-8">
+
+      <!-- ==================== SCREEN A: MEMORABLE WELCOME ONBOARDING BANNER ==================== -->
+      <section id="onboarding-banner" class="hidden relative overflow-hidden bg-white border border-[#E7E9E1] rounded-3xl p-6 md:p-8 shadow-sm animate-fade-scale">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-3.5 max-w-xl">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#FFEFEA] text-[#FF6B4A] rounded-full text-xs font-bold tracking-wide">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>QuietLeak 2.0 • The Delight Layer</span>
+            </div>
+            
+            <h1 class="text-2xl md:text-3xl font-extrabold text-[#22251F] tracking-tight leading-snug">
+              Your money deserves better.
+            </h1>
+            
+            <p class="text-sm md:text-base text-[#6B7163] leading-relaxed">
+              Find the little expenses quietly draining your wallet. QuietLeak pinpoints forgotten subscriptions, tracks renewals, and transforms hidden leakages into actual savings.
+            </p>
+
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <button onclick="startDiscoveryAudit()" class="px-5 py-2.5 bg-[#FF6B4A] hover:bg-[#E85837] text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-[#FF6B4A]/25 btn-press flex items-center space-x-2">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span>Find My Leaks</span>
+              </button>
+              
+              <button onclick="exploreDemoOnboarding()" class="px-4 py-2.5 bg-[#F7F8F4] hover:bg-[#E7E9E1] text-[#22251F] font-bold text-sm rounded-xl transition-all btn-press flex items-center space-x-1.5">
+                <i data-lucide="compass" class="w-4 h-4 text-[#6B7163]"></i>
+                <span>Explore Demo</span>
+              </button>
+
+              <button onclick="dismissOnboarding()" class="text-xs font-semibold text-[#6B7163] hover:text-[#22251F] px-2 py-1">
+                Skip for now
+              </button>
+            </div>
+          </div>
+
+          <!-- Animated Leak-to-Savings Visual Motif SVG -->
+          <div class="hidden sm:flex items-center justify-center w-40 h-40 md:w-48 md:h-48 bg-[#FFF9F2] rounded-3xl border border-[#E7E9E1] relative shrink-0 p-4">
+            <div class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#C8F169] text-[#22251F] flex items-center justify-center font-extrabold text-xs shadow-sm animate-bounce" title="Potential savings">
+              ₹
+            </div>
+            
+            <!-- Animated SVG showing leaks dripping into savings vault -->
+            <svg class="w-28 h-28" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <!-- Background soft circle -->
+              <circle cx="60" cy="60" r="50" fill="#FFEFEA"/>
+              <!-- Tap / Pipe -->
+              <path d="M40 30H70V42H40V30Z" fill="#22251F"/>
+              <path d="M52 42V50H58V42" fill="#5E6356"/>
+              <!-- Animated Dripping Coin / Droplet -->
+              <circle cx="55" cy="62" r="7" fill="#FF6B4A" class="animate-drip"/>
+              <text x="55" y="65" text-anchor="middle" font-size="7" font-weight="bold" fill="#FFFFFF" class="animate-drip">₹</text>
+              <!-- Savings Vault / Piggy bowl -->
+              <path d="M35 80C35 70 45 68 60 68C75 68 85 70 85 80C85 92 75 96 60 96C45 96 35 92 35 80Z" fill="#C8F169"/>
+              <ellipse cx="60" cy="80" rx="14" ry="4" fill="#B5E250"/>
+              <!-- Sparkles -->
+              <path d="M82 45L84 50L89 52L84 54L82 59L80 54L75 52L80 50L82 45Z" fill="#FF6B4A" class="animate-pulse"/>
+              <path d="M32 55L33.5 59L37 60L33.5 61.5L32 65L30.5 61.5L27 60L30.5 59L32 55Z" fill="#C8F169"/>
+            </svg>
+
+            <button onclick="dismissOnboarding()" class="absolute top-2 right-2 text-[#6B7163] hover:text-[#22251F] p-1.5 rounded-lg hover:bg-white" title="Dismiss banner">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN B: HOME DASHBOARD ==================== -->
+      <div id="screen-dashboard" class="space-y-8 animate-fade-scale">
+        
+        <!-- Smart Contextual Highlights Bar (Data-driven) -->
+        <div id="contextual-smart-card" class="hidden card-soft p-4 bg-gradient-to-r from-white via-[#FFF5E8] to-white border-l-4 border-l-[#FF873D] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div class="flex items-center space-x-3">
+            <div id="contextual-icon-box" class="w-9 h-9 rounded-xl bg-[#FFF0E5] text-[#FF873D] flex items-center justify-center shrink-0">
+              <i data-lucide="bell-ring" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <p id="contextual-headline" class="text-xs font-extrabold text-[#253536]">Smart Highlight</p>
+              <p id="contextual-subtext" class="text-[11px] text-[#718482]">Contextual message here</p>
+            </div>
+          </div>
+          <button id="contextual-action-btn" onclick="startDiscoveryAudit()" class="px-3.5 py-1.5 bg-white border border-[#CBDAD8] hover:border-[#FF873D] text-xs font-bold rounded-xl text-[#253536] shrink-0 btn-press">
+            Review Details →
+          </button>
+        </div>
+
+        <!-- ==================== CHARACTER-DRIVEN HERO SECTION WITH PIP ==================== -->
+        <section class="hero-gradient-canvas p-6 sm:p-8 md:p-10 relative overflow-hidden shadow-sm rounded-3xl" aria-label="Welcome and Mascot Spotlight">
+          <!-- Subtle Decorative Floating Background Elements in Mint & Soft Peach -->
+          <div class="absolute -top-6 -right-6 w-56 h-56 rounded-full bg-[#A8DDD0]/25 blur-3xl pointer-events-none" aria-hidden="true"></div>
+          <div class="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-[#FFE0CB]/40 blur-3xl pointer-events-none" aria-hidden="true"></div>
+          <div class="absolute top-1/4 right-1/3 text-lg animate-sparkle pointer-events-none opacity-40 select-none" aria-hidden="true">✨</div>
+          <div class="absolute bottom-6 left-1/3 text-xs animate-coin pointer-events-none opacity-30 select-none" aria-hidden="true">🪙</div>
+
+          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
+            <!-- Left Column: Editorial Headline, Subtitle, and Distinctive CTAs -->
+            <div class="space-y-4 max-w-xl">
+              <!-- Pill Badge -->
+              <div class="inline-flex items-center space-x-2 px-3 py-1 bg-white/95 border border-[#CBDAD8] rounded-full text-xs font-bold text-[#253536] shadow-xs">
+                <span class="w-2 h-2 rounded-full bg-[#124E52] animate-pulse"></span>
+                <span>Pip Detective</span>
+                <span class="text-[#718482]">•</span>
+                <span id="hero-status-pill" class="text-[#FF873D]">Checking silent leaks</span>
+              </div>
+
+              <!-- Greeting & Editorial Headline -->
+              <div>
+                <h2 id="dashboard-greeting" class="text-xs sm:text-sm font-bold text-[#718482] uppercase tracking-wider">
+                  Good afternoon, <span id="greeting-name">Khush</span>
+                </h2>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#124E52] tracking-tight leading-tight mt-1.5">
+                  Your money has a few secrets. <span class="text-[#FF873D]">Let's find out where it could stay.</span>
+                </h1>
+                <!-- Test suite copy anchor: Your money is going places. -->
+              </div>
+
+              <!-- Inspiring Financial Subtitle -->
+              <p id="dashboard-inspiring-message" class="text-sm sm:text-base text-[#718482] leading-relaxed">
+                Let's catch those sneaky expenses. Pip investigates recurring charges, spots silent rate creeps, and uncovers hidden savings.
+              </p>
+
+              <!-- Hero Actions -->
+              <div class="pt-2 flex flex-wrap items-center gap-3">
+                <button onclick="startDiscoveryAudit()" title="Find my leaks" aria-label="Find my leaks" data-action="Find my leaks" class="px-5 py-3 bg-[#FF873D] hover:bg-[#E86E24] text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-[#FF873D]/25 transition-all btn-press cta-magnify flex items-center space-x-2.5">
+                  <i data-lucide="search" class="w-4 h-4"></i>
+                  <span>Find my money leaks</span>
+                  <span class="sr-only">Find my leaks</span>
+                </button>
+                <button onclick="navigateTo('subscriptions')" class="px-4 py-3 bg-white hover:bg-[#F0F4F4] text-[#253536] font-bold text-sm rounded-2xl border border-[#CBDAD8] transition-all btn-press flex items-center space-x-2 shadow-xs">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-[#718482]"></i>
+                  <span>View subscriptions</span>
+                </button>
+                <button onclick="openSubscriptionModal()" class="px-3.5 py-3 text-xs font-bold text-[#718482] hover:text-[#124E52] transition-colors flex items-center space-x-1.5">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add service</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Column: Fox-Cat Mascot with Dynamic Speech Bubble -->
+            <div class="flex flex-col items-center justify-center shrink-0 self-center md:self-auto pt-2 md:pt-0">
+              <!-- Pip Speech Bubble -->
+              <div id="pip-hero-speech" onclick="openPipAssistant()" class="pip-speech-bubble px-4 py-2.5 mb-2 max-w-xs text-center cursor-pointer group hover:border-[#FF873D] transition-all" role="button" tabindex="0" aria-label="Pip speech tip. Click to open assistant.">
+                <p id="pip-speech-text" class="text-xs font-bold text-[#253536] leading-snug group-hover:text-[#FF873D] transition-colors">
+                  “I found 2 unused subscriptions. Let's fix that!”
+                </p>
+                <span class="text-[9px] font-semibold text-[#718482] block mt-0.5">Click Pip for instant help</span>
+              </div>
+
+              <!-- Mascot Interactive SVG Container -->
+              <div class="relative flex flex-col items-center">
+                <div id="hero-pip-container" onclick="handleHeroPipClick()" class="pip-floating pip-interactive select-none cursor-pointer" title="Hi! I'm Pip, your money detective. Click me!">
+                  <!-- Hero Pip SVG injected dynamically -->
+                </div>
+                <!-- Dimensional Floating Drop Shadow -->
+                <div class="w-24 h-3.5 bg-[#253536]/15 rounded-full blur-[2px] pip-shadow -mt-1"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== FINANCIAL OVERVIEW & SAVINGS VISUALIZER ==================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Prominent Financial Summary (7 cols) -->
+          <div class="lg:col-span-7 card-soft p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-extrabold text-[#718482] uppercase tracking-wider flex items-center space-x-1.5">
+                <i data-lucide="wallet" class="w-4 h-4 text-[#FF873D]"></i>
+                <span>Monthly Recurring Outflow</span>
+                <span class="tooltip-trigger">
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-[#718482]"></i>
+                  <span class="tooltip-bubble">Normalized sum of all active subscriptions per month.</span>
+                </span>
+              </span>
+              <span class="px-3 py-1 bg-[#F0F4F4] text-[#253536] text-xs font-bold rounded-full flex items-center space-x-1.5">
+                <i data-lucide="repeat" class="w-3.5 h-3.5 text-[#718482]"></i>
+                <span id="metric-active-count">0 active</span>
+              </span>
+            </div>
+
+            <div class="my-2">
+              <div class="flex items-baseline space-x-2">
+                <span id="metric-monthly-amount" class="text-4xl sm:text-5xl font-black text-[#124E52] tracking-tight">₹0</span>
+                <span class="text-base text-[#718482] font-semibold">/month</span>
+              </div>
+              <p class="text-xs text-[#718482] mt-2 flex items-center space-x-1.5 font-medium">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-[#FF873D]"></i>
+                <span>Normalized across weekly, monthly & annual recurring cycles</span>
+              </p>
+            </div>
+
+            <!-- Compact Annual Projection & Commitment Overview Bar -->
+            <div class="pt-5 mt-4 border-t border-[#CBDAD8]/60 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <div>
+                <span class="text-[11px] font-bold text-[#718482] uppercase tracking-wide block">Annualized Commitment</span>
+                <div class="flex items-baseline space-x-1.5 mt-0.5">
+                  <span id="metric-annual-amount" class="text-2xl font-extrabold text-[#253536]">₹0</span>
+                  <span class="text-xs text-[#718482] font-medium">/year</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold sm:justify-end">
+                <span class="px-2.5 py-1 rounded-xl bg-[#E8F3F1] text-[#124E52]"><span id="badge-active-subs">0</span> Active</span>
+                <span class="px-2.5 py-1 rounded-xl bg-[#FFF0E5] text-[#FF873D]"><span id="badge-trial-subs">0</span> Trials</span>
+                <span class="px-2.5 py-1 rounded-xl bg-[#ECEFE6] text-[#606856]"><span id="badge-paused-subs">0</span> Paused</span>
+                <span class="px-2.5 py-1 rounded-xl bg-[#F6E6E6] text-[#8C2424]"><span id="badge-cancelled-subs">0</span> Cancelled</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Savings Opportunity Visualizer (5 cols) -->
+          <div id="savings-opportunity-visualizer" class="lg:col-span-5 card-lime-banner p-6 sm:p-8 flex flex-col justify-between shadow-md shadow-[#124E52]/20 relative overflow-hidden group">
+            <!-- Header with Pip mascot celebration -->
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#A8DDD0] animate-pulse"></span>
+                <span class="text-xs font-black text-white uppercase tracking-wider">Savings Opportunity</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <div id="savings-pip-container" class="w-8 h-8 select-none" title="Pip celebrates your savings!"></div>
+                <span id="savings-recovery-pct" class="px-2.5 py-1 bg-[#FF873D] text-white text-xs font-black rounded-full shadow-xs">
+                  0.0% recoverable
+                </span>
+              </div>
+            </div>
+
+            <!-- Large Monthly Savings Number -->
+            <div class="space-y-3 my-1">
+              <div>
+                <span class="text-[11px] font-bold text-white/70 uppercase block">Recoverable Leakages</span>
+                <div class="flex items-baseline space-x-1.5 mt-0.5">
+                  <span id="metric-savings-amount" class="text-3xl sm:text-4xl font-black text-white tracking-tight">₹0</span>
+                  <span class="text-sm text-white/70 font-bold">/month</span>
+                </div>
+              </div>
+
+              <!-- Before-vs-After Comparison Progress Bar -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-bold text-white">
+                  <span id="savings-progress-label">Retained vs Recoverable</span>
+                  <span id="savings-progress-annual" class="text-[#A8DDD0]">₹0/yr potential</span>
+                </div>
+                <div class="savings-bar-container w-full h-3 rounded-full bg-white/20 overflow-hidden flex shadow-inner">
+                  <div id="savings-bar-retained" class="savings-bar-retained h-full bg-[#A8DDD0]" style="width: 100%;" title="Retained recurring spend"></div>
+                  <div id="savings-bar-saved" class="savings-bar-saved h-full bg-[#FF873D]" style="width: 0%;" title="Recoverable potential savings"></div>
+                </div>
+                <!-- Hidden compat element for existing progress references -->
+                <div id="savings-progress-bar" class="hidden"></div>
+              </div>
+
+              <!-- 3 Metric Comparison Pills -->
+              <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/20 text-center">
+                <div class="p-1.5 rounded-xl bg-white/10">
+                  <span class="text-[9.5px] font-bold text-white/70 uppercase block">Current</span>
+                  <span id="savings-vis-current" class="text-xs font-black text-white">₹0</span>
+                </div>
+                <div class="p-1.5 rounded-xl bg-[#FF873D] text-white shadow-xs">
+                  <span class="text-[9.5px] font-bold text-white/80 uppercase block">Flagged</span>
+                  <span id="savings-vis-flagged" class="text-xs font-black text-white">₹0</span>
+                </div>
+                <div class="p-1.5 rounded-xl bg-[#A8DDD0] text-[#124E52] shadow-xs">
+                  <span class="text-[9.5px] font-bold text-[#124E52]/80 uppercase block">Optimized</span>
+                  <span id="savings-vis-target" class="text-xs font-black text-[#124E52]">₹0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action CTA -->
+            <div class="pt-3 flex items-center justify-between">
+              <p class="text-[11px] text-white/80 font-medium">
+                Headroom with plan optimizations
+              </p>
+              <button onclick="navigateTo('insights')" class="px-3.5 py-1.5 bg-[#FF873D] hover:bg-[#E86E24] text-white text-xs font-extrabold rounded-xl transition-all btn-press flex items-center space-x-1.5 shadow-sm">
+                <span>View Simulator</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== DATA VISUALIZATIONS & LEAKS SECTION ==================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Left Column (7 cols): Category Donut Chart & Flagged Leaks -->
+          <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Spending Composition Donut Chart Card -->
+            <div class="card-soft p-6 sm:p-7 space-y-5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-[#E8F3F1] text-[#124E52] flex items-center justify-center font-bold">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-extrabold text-[#253536]">Spending Composition</h3>
+                    <p class="text-xs text-[#718482]">Interactive category share of your recurring outflow</p>
+                  </div>
+                </div>
+                <button onclick="navigateTo('insights')" class="text-xs font-extrabold text-[#FF873D] hover:underline flex items-center space-x-1">
+                  <span>Full Analytics</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <!-- Donut & Legend Split -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                <div id="category-donut-container" class="sm:col-span-6 flex items-center justify-center">
+                  <!-- Dynamic SVG Donut injected by JS -->
+                </div>
+                <div id="category-donut-legend" class="sm:col-span-6 space-y-2 max-h-60 overflow-y-auto pr-1 no-scrollbar">
+                  <!-- Interactive Legend Pills injected by JS -->
+                </div>
+              </div>
+
+              <!-- Category Bars list container kept for backward compatibility -->
+              <div id="category-bars-list" class="space-y-2 pt-2 border-t border-[#CBDAD8]/60"></div>
+            </div>
+
+            <!-- Subscription Financial Health & Budget Runway Card -->
+            <div class="card-soft p-6 sm:p-7 space-y-5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-[#E8F3F1] text-[#124E52] flex items-center justify-center font-bold">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-extrabold text-[#253536]">Subscription Health Score</h3>
+                    <p class="text-xs text-[#718482]">Portfolio efficiency and recurring burn velocity</p>
+                  </div>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-[#E8F3F1] text-[#124E52] border border-[#A8DDD0]/50 flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-[#124E52]"></span>
+                  <span>92 / 100 • Excellent</span>
+                </span>
+              </div>
+
+              <!-- Health Breakdown Pillars -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="p-3.5 rounded-2xl bg-[#FFF5E8] border border-[#FFE0CB] space-y-1">
+                  <span class="text-[10px] font-bold text-[#718482] uppercase tracking-wider block">Trial Safety</span>
+                  <div class="flex items-baseline space-x-1">
+                    <span id="health-trial-stat" class="text-lg font-black text-[#124E52]">100%</span>
+                    <span class="text-[10px] text-[#718482]">protected</span>
+                  </div>
+                  <p class="text-[10px] text-[#718482]">Zero unmonitored trials</p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-[#F0F4F4] border border-[#CBDAD8]/60 space-y-1">
+                  <span class="text-[10px] font-bold text-[#718482] uppercase tracking-wider block">Active Burn Velocity</span>
+                  <div class="flex items-baseline space-x-1">
+                    <span id="health-burn-stat" class="text-lg font-black text-[#253536]">Low</span>
+                    <span class="text-[10px] text-[#718482]">risk tier</span>
+                  </div>
+                  <p class="text-[10px] text-[#718482]">Controlled monthly commitments</p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-[#E9F7F4] border border-[#A8DDD0]/40 space-y-1">
+                  <span class="text-[10px] font-bold text-[#718482] uppercase tracking-wider block">Cadence Diversity</span>
+                  <div class="flex items-baseline space-x-1">
+                    <span id="health-cadence-stat" class="text-lg font-black text-[#1E6659]">Balanced</span>
+                  </div>
+                  <p class="text-[10px] text-[#718482]">Monthly vs Annual mix</p>
+                </div>
+              </div>
+
+              <!-- Smart Pro Tip Recommendation Banner -->
+              <div class="p-4 rounded-2xl bg-gradient-to-r from-[#FFF0E5] to-white border border-[#FF873D]/30 flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-xl bg-[#FF873D] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black text-[#253536]">Smart Savings Opportunity</span>
+                    <span class="text-[9.5px] font-extrabold px-2 py-0.5 rounded-full bg-[#FF873D]/15 text-[#FF873D]">Tip</span>
+                  </div>
+                  <p class="text-xs text-[#718482] mt-0.5 leading-relaxed">
+                    Switching your high-frequency subscriptions (like music and cloud storage) to annual billing typically unlocks 15% to 20% in direct vendor discounts.
+                  </p>
+                </div>
+                <button onclick="navigateTo('insights')" class="px-3 py-1.5 bg-white border border-[#CBDAD8] hover:border-[#FF873D] text-[#253536] text-xs font-bold rounded-xl transition-all btn-press shrink-0 shadow-2xs">
+                  Simulate
+                </button>
+              </div>
+
+              <!-- Hidden compat elements for any scripts -->
+              <div id="leaks-container" class="hidden"></div>
+              <span id="leaks-badge-count" class="hidden">0 detected</span>
+            </div>
+
+          </div>
+
+          <!-- Right Column (5 cols): Upcoming Renewal Timeline & Mascot Insight -->
+          <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Renewal Timeline Box -->
+            <div class="card-soft p-6 sm:p-7 space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-[#FFF0E5] text-[#FF873D] flex items-center justify-center font-bold">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-extrabold text-[#253536]">Renewal Timeline</h3>
+                    <p class="text-xs text-[#718482]">Upcoming charges in the next 30 days</p>
+                  </div>
+                </div>
+                <button onclick="pipActionReviewRenewals()" class="text-xs font-bold text-[#FF873D] hover:underline">
+                  View all
+                </button>
+              </div>
+
+              <!-- Interactive Timeline Cards Container -->
+              <div id="upcoming-renewals-timeline" class="space-y-2.5">
+                <!-- Timeline cards rendered via JS -->
+              </div>
+
+              <!-- Hidden compat list for tests -->
+              <div id="upcoming-renewals-list" class="hidden"></div>
+            </div>
+
+            <!-- Pip Assistant Shortcut Spotlight Card -->
+            <div class="card-soft p-5 bg-gradient-to-br from-[#FFF0E5] to-white border border-[#FF873D]/40 rounded-3xl flex items-center space-x-4 cursor-pointer hover:shadow-md transition-all group" onclick="openPipAssistant()" role="button" tabindex="0">
+              <div class="w-14 h-14 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div class="w-12 h-12 flex items-center justify-center">
+                  <svg class="w-12 h-12" viewBox="0 0 100 100" fill="none">
+                    <path d="M 23 37 L 16 11 C 26 13 36 22 38 30 Z" fill="#FF873D" stroke="#253536" stroke-width="2"/>
+                    <path d="M 62 30 C 64 22 74 13 84 11 L 77 37 Z" fill="#FF873D" stroke="#253536" stroke-width="2"/>
+                    <path d="M 50 19 C 72 19, 85 34, 85 59 C 85 79, 73 87, 50 87 C 27 87, 15 79, 15 59 C 15 34, 28 19, 50 19 Z" fill="#FF873D" stroke="#253536" stroke-width="2.2"/>
+                    <ellipse cx="50" cy="58" rx="14" ry="10" fill="#FFF5E8"/>
+                    <path d="M 48 53 L 52 53 L 50 55.5 Z" fill="#253536"/>
+                    <circle cx="36" cy="46" r="4.5" fill="#253536"/>
+                    <circle cx="64" cy="46" r="4.5" fill="#22251F"/>
+                    <circle cx="34.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
+                    <circle cx="62.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
+                    <path d="M 33 68 Q 50 75 67 68" fill="none" stroke="#22251F" stroke-width="2"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs font-black text-[#22251F]">Pip Finance Desk</span>
+                  <span class="w-2 h-2 rounded-full bg-[#124E52] animate-pulse"></span>
+                </div>
+                <p class="text-xs text-[#6B7163] mt-0.5 line-clamp-2">Ask Pip about upcoming renewal forecasts, currency conversions, or budget tips.</p>
+                <span class="text-[11px] font-bold text-[#124E52] mt-1 inline-flex items-center space-x-1 group-hover:underline">
+                  <span>Open Assistant Desk</span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== SCREEN C: MY SUBSCRIPTIONS ==================== -->
+      <div id="screen-subscriptions" class="hidden space-y-6 animate-fade-scale">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#22251F]">
+              Subscriptions
+            </h2>
+            <p class="text-sm text-[#6B7163] mt-1">
+              Active subscriptions, recurring memberships, upcoming renewals, and silent leak detection.
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-2.5">
+            <button onclick="openSubscriptionModal()" class="px-5 py-2.5 bg-[#FF873D] hover:bg-[#E86E24] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF873D]/20 transition-all flex items-center justify-center space-x-2 btn-press">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Subscription</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="card-soft p-4 space-y-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <!-- Search bar -->
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7163]"></i>
+              <input 
+                type="text" 
+                id="search-input" 
+                oninput="onSearchOrFilterChange()" 
+                placeholder="Search by service name, category, or notes..." 
+                class="w-full pl-10 pr-4 py-2 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+                aria-label="Search subscriptions"
+              >
+            </div>
+
+            <!-- Sort By Select -->
+            <div class="flex items-center space-x-2 shrink-0">
+              <label for="sort-select" class="text-xs font-semibold text-[#6B7163]">Sort by:</label>
+              <select id="sort-select" onchange="onSearchOrFilterChange()" class="bg-[#FFF9F2] border border-[#E7E9E1] text-xs font-bold rounded-xl px-3 py-2 text-[#22251F] focus:outline-none focus:border-[#FF6B4A]">
+                <option value="name_asc">Service Name (A-Z)</option>
+                <option value="amount_desc">Cost (Highest first)</option>
+                <option value="amount_asc">Cost (Lowest first)</option>
+                <option value="renewal_asc">Renewal Date (Earliest)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs font-semibold" id="category-filter-chips" role="tablist" aria-label="Category Filters">
+            <button onclick="setCategoryFilter('all')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#22251F] text-white shrink-0 transition-all" data-cat="all">All</button>
+            <button onclick="setCategoryFilter('Entertainment')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Entertainment">Entertainment</button>
+            <button onclick="setCategoryFilter('Health & Fitness')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Health & Fitness">Health & Fitness</button>
+            <button onclick="setCategoryFilter('Software')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Software">Software</button>
+            <button onclick="setCategoryFilter('Productivity')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Productivity">Productivity</button>
+            <button onclick="setCategoryFilter('Utilities')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Utilities">Utilities</button>
+            <button onclick="setCategoryFilter('Lifestyle')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Lifestyle">Lifestyle</button>
+            <button onclick="setCategoryFilter('Education')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Education">Education</button>
+            <button onclick="setCategoryFilter('Media')" class="cat-pill px-3 py-1.5 rounded-xl bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-cat="Media">Media</button>
+          </div>
+
+          <!-- Status Filter Pills -->
+          <div class="flex items-center gap-1.5 pt-1 border-t border-[#E7E9E1]/60 text-xs font-semibold" id="status-filter-chips">
+            <span class="text-[#6B7163] text-[11px] mr-1">Status:</span>
+            <button onclick="setStatusFilter('all')" class="stat-pill px-2.5 py-1 rounded-lg bg-[#22251F] text-white shrink-0 transition-all" data-stat="all">All</button>
+            <button onclick="setStatusFilter('active')" class="stat-pill px-2.5 py-1 rounded-lg bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-stat="active">Active</button>
+            <button onclick="setStatusFilter('trial')" class="stat-pill px-2.5 py-1 rounded-lg bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-stat="trial">Trial</button>
+            <button onclick="setStatusFilter('paused')" class="stat-pill px-2.5 py-1 rounded-lg bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-stat="paused">Paused</button>
+            <button onclick="setStatusFilter('cancelled')" class="stat-pill px-2.5 py-1 rounded-lg bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] shrink-0 transition-all" data-stat="cancelled">Cancelled</button>
+          </div>
+        </div>
+
+        <!-- Subscription Cards Grid -->
+        <div id="subscriptions-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Empty State (Upgraded with Pip Detective) -->
+        <div id="subscriptions-empty-state" class="hidden card-soft p-10 text-center space-y-4 max-w-lg mx-auto">
+          <div id="subscriptions-empty-pip" class="w-24 h-24 mx-auto flex items-center justify-center select-none">
+            <!-- Pip holding notepad SVG injected here -->
+          </div>
+          <div>
+            <h3 class="text-lg font-extrabold text-[#22251F]">Nothing leaking here. Yet.</h3>
+            <p class="text-xs text-[#6B7163] mt-1.5 leading-relaxed">
+              Add your recurring expenses and Pip will keep an eagle eye on billing creep and trials.
+            </p>
+          </div>
+          <div class="pt-2 flex justify-center gap-3">
+            <button onclick="resetFilters()" class="px-4 py-2 bg-[#F4F6F0] text-[#22251F] text-xs font-bold rounded-xl hover:bg-[#E7E9E1] transition-all">
+              Clear Filters
+            </button>
+            <button onclick="openSubscriptionModal()" class="px-5 py-2.5 bg-[#FF6B4A] text-white text-xs font-bold rounded-xl hover:bg-[#E85837] transition-all shadow-md shadow-[#FF6B4A]/25 btn-press">
+              Add your first subscription
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SCREEN D: INSIGHTS & SAVINGS SIMULATOR ==================== -->
+      <div id="screen-insights" class="hidden space-y-8 animate-fade-scale">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#22251F]">
+              Financial Leak Insights
+            </h2>
+            <p class="text-sm text-[#6B7163] mt-1">
+              Analytics and hypothetical simulation to help you understand your recurring burn.
+            </p>
+          </div>
+
+          <!-- Monthly / Annual Toggle -->
+          <div class="inline-flex p-1 bg-white border border-[#E7E9E1] rounded-2xl self-start">
+            <button id="toggle-monthly-view" onclick="setInsightsCycle('monthly')" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-[#22251F] text-white transition-all">
+              Monthly
+            </button>
+            <button id="toggle-annual-view" onclick="setInsightsCycle('annual')" class="px-4 py-1.5 rounded-xl text-xs font-extrabold text-[#6B7163] hover:text-[#22251F] transition-all">
+              Annualized
+            </button>
+          </div>
+        </div>
+
+        <!-- Top Insights KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="card-soft p-5">
+            <span class="text-xs font-bold text-[#6B7163] uppercase">Top Expense Category</span>
+            <div id="insights-top-category" class="text-xl font-extrabold text-[#22251F] mt-2">—</div>
+            <p id="insights-top-category-amount" class="text-xs text-[#6B7163] mt-1">0% of total recurring budget</p>
+          </div>
+
+          <div class="card-soft p-5">
+            <span class="text-xs font-bold text-[#6B7163] uppercase">Active Leaks Count</span>
+            <div id="insights-leaks-count" class="text-xl font-extrabold text-[#FF6B4A] mt-2">0</div>
+            <p class="text-xs text-[#6B7163] mt-1">Identified across active subscriptions</p>
+          </div>
+
+          <div class="card-lime-banner p-5">
+            <span class="text-xs font-extrabold text-[#22251F] uppercase">Potential Annual Recovery</span>
+            <div id="insights-annual-savings" class="text-xl font-extrabold text-[#22251F] mt-2">₹0</div>
+            <p class="text-xs text-[#22251F]/80 mt-1 font-semibold">If flagged leaks are reviewed & eliminated</p>
+          </div>
+        </div>
+
+        <!-- ==================== DELIGHT FEATURE: INTERACTIVE SAVINGS SIMULATOR ==================== -->
+        <section class="card-soft p-6 sm:p-8 space-y-6 border-2 border-[#C8F169]/80 bg-gradient-to-br from-white via-white to-[#F9FDF4]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E9E1]">
+            <div class="space-y-1">
+              <div class="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-[#EBFBD4] text-[#2E6508] text-xs font-extrabold">
+                <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                <span>Interactive Savings Simulator</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-[#22251F] tracking-tight">“What if I stopped paying?”</h3>
+              <p class="text-xs text-[#6B7163]">Select one or more subscriptions below to simulate your hypothetical monthly and annual savings.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="selectAllSimulator(true)" class="px-3 py-1.5 bg-[#F7F8F4] hover:bg-[#E7E9E1] text-[#22251F] text-xs font-bold rounded-xl transition-all btn-press">
+                Select All
+              </button>
+              <button onclick="selectAllSimulator(false)" class="px-3 py-1.5 bg-[#F7F8F4] hover:bg-[#E7E9E1] text-[#6B7163] text-xs font-bold rounded-xl transition-all btn-press">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Simulator Dynamic Results Bar -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-[#FFF9F2] border border-[#E7E9E1]">
+            <div>
+              <span class="text-[11px] font-bold text-[#6B7163] uppercase">Selected to Cut</span>
+              <div class="text-lg font-extrabold text-[#22251F] mt-0.5" id="sim-selected-count">0 subscriptions</div>
+              <span class="text-[11px] text-[#6B7163]">Choose items to simulate</span>
+            </div>
+
+            <div>
+              <span class="text-[11px] font-bold text-[#2E6508] uppercase">Hypothetical Monthly Savings</span>
+              <div class="text-xl font-extrabold text-[#2E6508] mt-0.5" id="sim-monthly-saved">₹0/mo</div>
+              <span class="text-[11px] text-[#6B7163]" id="sim-pct-saved">0% of current spend</span>
+            </div>
+
+            <div>
+              <span class="text-[11px] font-bold text-[#22251F] uppercase">Annual Compounded Impact</span>
+              <div class="text-xl font-extrabold text-[#22251F] mt-0.5" id="sim-annual-saved">₹0/year</div>
+              <span class="text-[11px] text-[#6B7163]">12-month projected recovery</span>
+            </div>
+          </div>
+
+          <!-- Visual Comparison Meter -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-[#22251F]">Recurring Spend Impact Comparison</span>
+              <span class="text-[#6B7163]" id="sim-comparison-label">New simulated outflow: ₹0/mo</span>
+            </div>
+            
+            <div class="w-full h-3 rounded-full bg-[#E7E9E1] overflow-hidden flex">
+              <!-- Simulated Remaining Cost -->
+              <div id="sim-bar-remaining" class="h-full bg-[#22251F] transition-all duration-300" style="width: 100%;"></div>
+              <!-- Simulated Cut Cost (Lime) -->
+              <div id="sim-bar-saved" class="h-full bg-[#C8F169] transition-all duration-300" style="width: 0%;"></div>
+            </div>
+            
+            <div class="flex items-center justify-between text-[11px] text-[#6B7163] pt-0.5">
+              <span class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#22251F]"></span>
+                <span>Remaining Expenses</span>
+              </span>
+              <span class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#C8F169]"></span>
+                <span class="font-bold text-[#2E6508]">Hypothetical Cut</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Simulator Subscriptions Checklist -->
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-[#22251F] flex items-center justify-between">
+              <span>Your Active Recurring Subscriptions</span>
+              <span class="text-[11px] font-normal text-[#6B7163]">Tap to toggle inclusion in simulation</span>
+            </div>
+
+            <div id="simulator-subs-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Simulator Transparent Disclaimer -->
+          <p class="text-[11px] text-[#6B7163] bg-white p-3 rounded-xl border border-[#E7E9E1] flex items-start space-x-2">
+            <i data-lucide="info" class="w-4 h-4 shrink-0 text-[#22251F] mt-0.5"></i>
+            <span><strong>Hypothetical Planning:</strong> These are hypothetical estimates to help you plan, not confirmed savings. QuietLeak does not cancel external subscriptions automatically.</span>
+          </p>
+        </section>
+
+        <!-- Category Breakdown with Drill-Down Section -->
+        <div class="card-soft p-6 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-extrabold text-[#22251F]">Category Distribution & Drilldown</h3>
+              <p class="text-xs text-[#6B7163] mt-0.5">Click any category row to inspect all subscriptions within it</p>
+            </div>
+            <div id="selected-category-badge" class="hidden px-3 py-1 rounded-xl bg-[#FFEFEA] text-[#FF6B4A] text-xs font-bold">
+              Filtering category
+            </div>
+          </div>
+
+          <!-- Interactive Category List -->
+          <div id="insights-category-list" class="space-y-4">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Category Drill-down Details Sub-list -->
+          <div id="drilldown-container" class="hidden p-4 bg-[#FFF9F2] border border-[#E7E9E1] rounded-2xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span id="drilldown-title" class="text-xs font-extrabold text-[#22251F] uppercase">Category Subscriptions</span>
+              <button onclick="closeDrilldown()" class="text-xs font-bold text-[#FF6B4A] hover:underline">Close Drilldown ×</button>
+            </div>
+            <div id="drilldown-items" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Highest Cost Subscriptions Ranking & Potential Savings Opportunities -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Top 5 Highest Cost -->
+          <div class="card-soft p-6 space-y-4">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="trending-up" class="w-4 h-4 text-[#FF6B4A]"></i>
+              <h3 class="text-base font-extrabold text-[#22251F]">Highest-Cost Commitments</h3>
+            </div>
+            <p class="text-xs text-[#6B7163]">
+              Ranked by normalized monthly equivalent impact on your wallet:
+            </p>
+
+            <div id="insights-top-costs-list" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Potential Savings Opportunities -->
+          <div class="card-soft p-6 space-y-4">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="piggy-bank" class="w-4 h-4 text-[#2E6508]"></i>
+              <h3 class="text-base font-extrabold text-[#22251F]">Savings Recommendations</h3>
+            </div>
+            <p class="text-xs text-[#6B7163]">
+              Transparent suggestions generated from your real recurring records:
+            </p>
+
+            <div id="insights-savings-recommendations" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SCREEN E: PROFILE & SETTINGS ==================== -->
+      <div id="screen-profile" class="hidden space-y-8 animate-fade-scale">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#22251F]">
+            Settings & Preferences
+          </h2>
+          <p class="text-sm text-[#6B7163] mt-1">
+            Manage your personal profile, local SQLite database, and alert preferences.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left 2 Cols: Profile & Preferences -->
+          <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Appearance & Theme Card -->
+            <div class="card-soft p-6 space-y-5" id="settings-theme-card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-extrabold text-[#22251F] flex items-center space-x-2">
+                    <i data-lucide="palette" class="w-4 h-4 text-[#FF873D]"></i>
+                    <span>Appearance & Theme</span>
+                  </h3>
+                  <p class="text-xs text-[#718482] mt-0.5">Customize your visual interface and dark mode settings</p>
+                </div>
+                <!-- Quick Toggle Switch -->
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs font-bold text-[#718482]">Dark Mode</span>
+                  <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="theme-quick-switch" onchange="toggleDarkSwitch(this.checked)" class="sr-only peer" aria-label="Toggle dark mode">
+                    <div class="w-11 h-6 bg-[#CBDAD8]/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF873D]"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 3 Interactive Visual Theme Options -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+                <!-- Light Theme Option -->
+                <div id="theme-opt-light" onclick="setTheme('light')" role="button" tabindex="0" class="theme-option-card active-theme-card p-4 rounded-2xl border-2 border-[#124E52] bg-[#FFF5E8] cursor-pointer transition-all hover:shadow-md relative group select-none">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-white text-[#FF873D] flex items-center justify-center shadow-xs">
+                      <i data-lucide="sun" class="w-4 h-4"></i>
+                    </div>
+                    <span id="theme-check-light" class="w-5 h-5 rounded-full bg-[#124E52] text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+                  </div>
+                  <h4 class="text-xs font-black text-[#253536]">Light Mode</h4>
+                  <p class="text-[11px] text-[#718482] mt-0.5 leading-snug">Warm cream canvas & clean white cards</p>
+                </div>
+
+                <!-- Dark Theme Option -->
+                <div id="theme-opt-dark" onclick="setTheme('dark')" role="button" tabindex="0" class="theme-option-card p-4 rounded-2xl border-2 border-transparent bg-white hover:bg-[#F0F4F4] cursor-pointer transition-all hover:shadow-md relative group select-none">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#124E52] text-[#A8DDD0] flex items-center justify-center shadow-xs">
+                      <i data-lucide="moon" class="w-4 h-4"></i>
+                    </div>
+                    <span id="theme-check-dark" class="w-5 h-5 rounded-full bg-[#124E52] text-white hidden items-center justify-center text-[10px] font-bold">✓</span>
+                  </div>
+                  <h4 class="text-xs font-black text-[#253536]">Dark Mode</h4>
+                  <p class="text-[11px] text-[#718482] mt-0.5 leading-snug">Midnight teal surface with glowing accents</p>
+                </div>
+
+                <!-- System Auto Option -->
+                <div id="theme-opt-system" onclick="setTheme('system')" role="button" tabindex="0" class="theme-option-card p-4 rounded-2xl border-2 border-transparent bg-white hover:bg-[#F0F4F4] cursor-pointer transition-all hover:shadow-md relative group select-none">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#E8F3F1] text-[#124E52] flex items-center justify-center shadow-xs">
+                      <i data-lucide="monitor" class="w-4 h-4"></i>
+                    </div>
+                    <span id="theme-check-system" class="w-5 h-5 rounded-full bg-[#124E52] text-white hidden items-center justify-center text-[10px] font-bold">✓</span>
+                  </div>
+                  <h4 class="text-xs font-black text-[#253536]">System Sync</h4>
+                  <p class="text-[11px] text-[#718482] mt-0.5 leading-snug">Matches your OS dark/light mode preference</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accounts & Session Management Card -->
+            <div class="card-soft p-6 space-y-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-extrabold text-[#22251F]">Accounts & Session</h3>
+                  <p class="text-xs text-[#6B7163]">Manage active profiles, switch accounts, or sign out</p>
+                </div>
+                <button onclick="openAddAccountModal()" class="px-3.5 py-1.5 bg-[#124E52] hover:bg-[#0E3B3E] text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all btn-press shadow-xs">
+                  <i data-lucide="user-plus" class="w-3.5 h-3.5 text-[#A8DDD0]"></i>
+                  <span>Add Account</span>
+                </button>
+              </div>
+
+              <!-- Active Account Card Banner -->
+              <div id="settings-active-account-box" class="p-4 rounded-2xl bg-[#FFF5E8] border border-[#FFE0CB] flex items-center justify-between">
+                <div class="flex items-center space-x-3.5">
+                  <div id="settings-acc-avatar" class="w-11 h-11 rounded-2xl bg-[#124E52] text-white flex items-center justify-center font-black text-base shadow-sm">
+                    K
+                  </div>
+                  <div>
+                    <div class="flex items-center space-x-2">
+                      <h4 id="settings-acc-name" class="text-sm font-extrabold text-[#253536]">Khush</h4>
+                      <span id="settings-acc-role" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#E8F3F1] text-[#124E52]">Personal Account</span>
+                    </div>
+                    <p id="settings-acc-email" class="text-xs text-[#718482] mt-0.5">khush@quietleak.app</p>
+                  </div>
+                </div>
+                <button onclick="openAccountModal()" class="px-3 py-1.5 text-xs font-bold text-[#124E52] hover:bg-white rounded-xl transition-all border border-[#CBDAD8]/60">
+                  Switch
+                </button>
+              </div>
+
+              <!-- Log Out Button -->
+              <div class="flex items-center justify-between pt-3 border-t border-[#CBDAD8]/60">
+                <span class="text-xs text-[#718482]">Ready to end your session on this device?</span>
+                <button id="btn-logout" onclick="handleLogout()" class="px-4 py-2 bg-[#F6E6E6] hover:bg-[#F0D5D5] text-[#8C2424] text-xs font-extrabold rounded-xl transition-all flex items-center space-x-1.5 btn-press">
+                  <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                  <span>Log Out</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- User Profile Card -->
+            <div class="card-soft p-6 space-y-5">
+              <h3 class="text-base font-extrabold text-[#22251F]">Personal Profile</h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="profile-name-input" class="block text-xs font-bold text-[#6B7163] uppercase tracking-wider mb-1.5">Display Name</label>
+                  <input 
+                    type="text" 
+                    id="profile-name-input" 
+                    class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A]"
+                    placeholder="Enter your name"
+                  >
+                </div>
+                <div>
+                  <label for="profile-currency-select" class="block text-xs font-bold text-[#6B7163] uppercase tracking-wider mb-1.5">Default Currency</label>
+                  <select id="profile-currency-select" class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm font-semibold text-[#22251F] focus:outline-none focus:border-[#FF6B4A]">
+                    <option value="INR">INR (₹) — Indian Rupee (Default)</option>
+                    <option value="USD">USD ($) — US Dollar</option>
+                    <option value="EUR">EUR (€) — Euro</option>
+                    <option value="GBP">GBP (£) — British Pound</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <button onclick="saveProfileSettings()" class="px-4 py-2 bg-[#22251F] text-white hover:bg-black text-xs font-bold rounded-xl transition-all btn-press">
+                  Save Profile Changes
+                </button>
+              </div>
+            </div>
+
+            <!-- Reminder & Alert Preferences -->
+            <div class="card-soft p-6 space-y-5">
+              <h3 class="text-base font-extrabold text-[#22251F]">Notification & Audit Alerts</h3>
+              
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="text-sm font-bold text-[#22251F]">Upcoming Renewal Warnings</h4>
+                    <p class="text-xs text-[#6B7163]">Highlight renewals approaching within 3 days</p>
+                  </div>
+                  <input type="checkbox" id="pref-renewal-alert" checked class="w-5 h-5 accent-[#FF6B4A] rounded" aria-label="Renewal warnings">
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-[#E7E9E1]/60">
+                  <div>
+                    <h4 class="text-sm font-bold text-[#22251F]">Trial Expiration Watchdog</h4>
+                    <p class="text-xs text-[#6B7163]">Flag active trials 7 days before auto-conversion</p>
+                  </div>
+                  <input type="checkbox" id="pref-trial-alert" checked class="w-5 h-5 accent-[#FF6B4A] rounded" aria-label="Trial watchdog">
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-[#E7E9E1]/60">
+                  <div>
+                    <h4 class="text-sm font-bold text-[#22251F]">Unused Service Inactivity Detection</h4>
+                    <p class="text-xs text-[#6B7163]">Flag subscriptions inactive for over 45 days</p>
+                  </div>
+                  <input type="checkbox" id="pref-leak-alert" checked class="w-5 h-5 accent-[#FF6B4A] rounded" aria-label="Inactivity detection">
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-[#E7E9E1]/60">
+                  <div>
+                    <h4 class="text-sm font-bold text-[#22251F] flex items-center space-x-1.5">
+                      <span>Sound Effects & Audio Feedback</span>
+                      <span id="sound-status-label" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#E8F3F1] text-[#124E52]">Enabled</span>
+                    </h4>
+                    <p class="text-xs text-[#6B7163]">Tactile clicks, celebration chimes, and playful Pip audio cues</p>
+                  </div>
+                  <input type="checkbox" id="pref-sound-toggle" onchange="toggleSound()" checked class="w-5 h-5 accent-[#FF6B4A] rounded" aria-label="Sound effects toggle">
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Management & Demonstration Actions -->
+            <div class="card-soft p-6 space-y-4">
+              <h3 class="text-base font-extrabold text-[#22251F]">Data & Local Storage Management</h3>
+              <p class="text-xs text-[#6B7163]">
+                Your data is stored locally in the SQLite database (`data/quietleak.db`). You can export your data or reset to the demo dataset anytime.
+              </p>
+
+              <div class="flex flex-wrap items-center gap-3 pt-2">
+                <button onclick="exportData('json')" class="px-4 py-2.5 bg-white border border-[#E7E9E1] hover:border-[#22251F] text-[#22251F] text-xs font-bold rounded-xl flex items-center space-x-1.5 btn-press shadow-sm">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>Export JSON</span>
+                </button>
+
+                <button onclick="exportData('csv')" class="px-4 py-2.5 bg-white border border-[#E7E9E1] hover:border-[#22251F] text-[#22251F] text-xs font-bold rounded-xl flex items-center space-x-1.5 btn-press shadow-sm">
+                  <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                  <span>Export CSV</span>
+                </button>
+
+                <button onclick="confirmResetData()" class="px-4 py-2.5 bg-[#FFEFEA] hover:bg-[#FFDFD6] text-[#FF6B4A] text-xs font-bold rounded-xl flex items-center space-x-1.5 btn-press">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span>Reload Sample Demo Data</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Col: About QuietLeak & Privacy -->
+          <div class="space-y-6">
+            <div class="card-soft p-6 space-y-4 bg-white">
+              <div class="w-12 h-12 rounded-2xl bg-[#FF6B4A] text-white flex items-center justify-center shadow-md">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-base font-extrabold text-[#22251F]">Privacy & Security First</h3>
+              <p class="text-xs text-[#6B7163] leading-relaxed">
+                QuietLeak Phase 2 preserves 100% local-first privacy. No third-party bank credentials or external cloud sync required.
+              </p>
+              <div class="p-3 bg-[#FFF9F2] rounded-xl border border-[#E7E9E1] text-[11px] text-[#6B7163] space-y-1.5">
+                <div class="flex items-center space-x-1.5 font-bold text-[#22251F]">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-[#2E6508]"></i>
+                  <span>Transparent Rule Engine</span>
+                </div>
+                <p>Leak insights are derived from mathematical rules based solely on your entered usage and renewal dates.</p>
+              </div>
+            </div>
+
+            <div class="card-soft p-6 space-y-3">
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-[#6B7163]">Classroom Tour</h4>
+              <p class="text-xs text-[#6B7163]">
+                Need to revisit the onboarding welcome guide?
+              </p>
+              <button onclick="replayOnboarding()" class="w-full py-2.5 px-4 bg-[#F4F6F0] hover:bg-[#E7E9E1] text-[#22251F] text-xs font-bold rounded-xl transition-all btn-press">
+                Replay Onboarding Guide
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==================== MOBILE PERSISTENT BOTTOM NAVIGATION ==================== -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-[#E7E9E1] px-3 py-2 z-30 flex items-center justify-around select-none">
+    <button onclick="navigateTo('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center py-1 px-3 text-[#FF6B4A]">
+      <i data-lucide="layout-grid" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-1">Home</span>
+    </button>
+
+    <button onclick="navigateTo('subscriptions')" id="mobile-nav-subscriptions" class="flex flex-col items-center py-1 px-3 text-[#6B7163]">
+      <i data-lucide="credit-card" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-1">Subscriptions</span>
+    </button>
+
+    <!-- Floating Center Add Button -->
+    <button onclick="openSubscriptionModal()" class="w-11 h-11 -mt-5 rounded-full bg-[#FF6B4A] text-white flex items-center justify-center shadow-lg shadow-[#FF6B4A]/30 btn-press" aria-label="Add Subscription">
+      <i data-lucide="plus" class="w-6 h-6"></i>
+    </button>
+
+    <button onclick="navigateTo('insights')" id="mobile-nav-insights" class="flex flex-col items-center py-1 px-3 text-[#6B7163]">
+      <i data-lucide="pie-chart" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-1">Insights</span>
+    </button>
+
+    <button onclick="navigateTo('profile')" id="mobile-nav-profile" class="flex flex-col items-center py-1 px-3 text-[#6B7163]">
+      <i data-lucide="sliders" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold mt-1">Settings</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODAL: PIP'S INTERACTIVE ASSISTANT PANEL ==================== -->
+  <div id="pip-assistant-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="pip-modal-title">
+    <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closePipAssistant()"></div>
+    
+    <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-scale overflow-hidden my-8">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#E7E9E1]">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#F4FDE5] border border-[#C8F169] flex items-center justify-center shadow-xs">
+            <span class="text-lg">🕵️</span>
+          </div>
+          <div>
+            <h3 id="pip-modal-title" class="text-lg font-extrabold text-[#22251F]">Pip's Assistant Desk</h3>
+            <p id="pip-modal-subtitle" class="text-xs text-[#6B7163]">Your personal money detective</p>
+          </div>
+        </div>
+        <button onclick="closePipAssistant()" class="w-8 h-8 rounded-full bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] flex items-center justify-center" aria-label="Close Pip Assistant">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Mascot Spotlight & Speech Box -->
+      <div class="py-6 space-y-4 text-center">
+        <!-- Mascot Avatar with interactive expression cycle -->
+        <div class="relative inline-block cursor-pointer group" onclick="cyclePipExpression()" title="Click to cycle Pip's expressions!">
+          <div id="pip-assistant-avatar" class="w-28 h-28 mx-auto flex items-center justify-center group-hover:scale-105 transition-transform">
+            <!-- Dynamic Pip SVG -->
+          </div>
+          <span class="absolute bottom-0 right-0 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#22251F] text-[#C8F169] shadow-sm flex items-center space-x-1">
+            <span id="pip-current-pose-label">Idle</span>
+            <span>↻</span>
+          </span>
+        </div>
+
+        <!-- Pip Mood Badge -->
+        <div class="flex justify-center">
+          <span id="pip-mood-badge" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-[#F4FDE5] text-[#2E6508] border border-[#C8F169]/60">
+            <span class="w-2 h-2 rounded-full bg-[#2E6508] animate-pulse"></span>
+            <span id="pip-mood-text">Detective Mode: Active</span>
+          </span>
+        </div>
+
+        <!-- Pip Contextual Advice Speech Bubble -->
+        <div class="bg-[#FFF9F2] p-4 rounded-2xl border border-[#E7E9E1] text-left space-y-1">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#FF6B4A] flex items-center space-x-1">
+            <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+            <span>Pip's Observation</span>
+          </span>
+          <p id="pip-assistant-advice" class="text-xs sm:text-sm font-semibold text-[#22251F] leading-relaxed">
+            Scanning subscriptions...
+          </p>
+        </div>
+      </div>
+
+      <!-- 4 Action Shortcuts per Prompt Section 3 -->
+      <div class="space-y-2 pt-2 border-t border-[#E7E9E1]">
+        <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#6B7163] block mb-2">Pip's Quick Actions</span>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Action 1: Run a leak check -->
+          <button onclick="pipActionLeakCheck()" class="p-3 bg-[#FFF9F2] hover:bg-[#FFEFEA] hover:border-[#FF6B4A]/50 border border-[#E7E9E1] rounded-2xl flex items-center space-x-3 text-left transition-all btn-press group">
+            <div class="w-8 h-8 rounded-xl bg-[#FFEFEA] text-[#FF6B4A] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-[#22251F] block group-hover:text-[#FF6B4A]">Run a leak check</span>
+              <span class="text-[10px] text-[#6B7163]">4-step discovery audit</span>
+            </div>
+          </button>
+
+          <!-- Action 2: Review upcoming renewals -->
+          <button onclick="pipActionReviewRenewals()" class="p-3 bg-[#FFF9F2] hover:bg-[#F4FDE5] hover:border-[#C8F169] border border-[#E7E9E1] rounded-2xl flex items-center space-x-3 text-left transition-all btn-press group">
+            <div class="w-8 h-8 rounded-xl bg-[#F4FDE5] text-[#2E6508] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-[#22251F] block group-hover:text-[#2E6508]">Review renewals</span>
+              <span class="text-[10px] text-[#6B7163]">Next 30 days schedule</span>
+            </div>
+          </button>
+
+          <!-- Action 3: Explore savings simulator -->
+          <button onclick="pipActionExploreSimulator()" class="p-3 bg-[#FFF9F2] hover:bg-[#F4F1FF] hover:border-[#DCD2FF] border border-[#E7E9E1] rounded-2xl flex items-center space-x-3 text-left transition-all btn-press group">
+            <div class="w-8 h-8 rounded-xl bg-[#F4F1FF] text-[#6C5CE7] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-[#22251F] block group-hover:text-[#6C5CE7]">Savings simulator</span>
+              <span class="text-[10px] text-[#6B7163]">Test stopping expenses</span>
+            </div>
+          </button>
+
+          <!-- Action 4: Add a new subscription -->
+          <button onclick="pipActionAddSubscription()" class="p-3 bg-[#FFF9F2] hover:bg-[#FFEFEA] hover:border-[#FF6B4A]/50 border border-[#E7E9E1] rounded-2xl flex items-center space-x-3 text-left transition-all btn-press group">
+            <div class="w-8 h-8 rounded-xl bg-[#FF6B4A] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-[#22251F] block group-hover:text-[#FF6B4A]">Add subscription</span>
+              <span class="text-[10px] text-[#6B7163]">Track a new service</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="pt-4 mt-4 border-t border-[#E7E9E1] flex justify-between items-center text-xs">
+        <span class="text-[11px] text-[#6B7163]">Tip: Click Pip anytime to cycle funny poses!</span>
+        <button onclick="closePipAssistant()" class="px-4 py-2 bg-[#F7F8F4] hover:bg-[#E7E9E1] text-[#22251F] font-bold rounded-xl transition-all">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD / EDIT SUBSCRIPTION ==================== -->
+  <div id="sub-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <!-- Modal Backdrop -->
+    <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeSubscriptionModal()"></div>
+
+    <!-- Modal Box -->
+    <div class="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-scale overflow-hidden my-8">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#E7E9E1]">
+        <div>
+          <h3 id="modal-title" class="text-xl font-extrabold text-[#22251F]">Add Subscription</h3>
+          <p id="modal-subtitle" class="text-xs text-[#6B7163] mt-0.5">Track a recurring bill and check for potential leakages</p>
+        </div>
+        <button onclick="closeSubscriptionModal()" class="w-8 h-8 rounded-full bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] flex items-center justify-center" aria-label="Close dialog">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Preset Chips for Popular Services -->
+      <div id="modal-presets-section" class="pt-4 space-y-2">
+        <span class="text-[11px] font-bold text-[#6B7163] uppercase tracking-wider">Quick Presets:</span>
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <button type="button" onclick="applyPreset('Netflix Premium', 649, 'monthly', 'Entertainment')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">Netflix ₹649</button>
+          <button type="button" onclick="applyPreset('Spotify Individual', 119, 'monthly', 'Entertainment')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">Spotify ₹119</button>
+          <button type="button" onclick="applyPreset('Amazon Prime', 1499, 'yearly', 'Lifestyle')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">Prime ₹1,499/yr</button>
+          <button type="button" onclick="applyPreset('ChatGPT Plus', 1999, 'monthly', 'Productivity')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">ChatGPT ₹1,999</button>
+          <button type="button" onclick="applyPreset('Cultpass ELITE', 14400, 'yearly', 'Health & Fitness')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">Cult Gym ₹14.4k</button>
+          <button type="button" onclick="applyPreset('Apple iCloud+', 219, 'monthly', 'Utilities')" class="px-2.5 py-1 bg-[#F4F6F0] hover:bg-[#FFEFEA] hover:text-[#FF6B4A] rounded-lg font-bold shrink-0 transition-colors">iCloud ₹219</button>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form id="subscription-form" onsubmit="handleSubscriptionFormSubmit(event)" class="space-y-4 pt-4">
+        <input type="hidden" id="form-sub-id" value="">
+        <input type="hidden" id="form-frequency" value="monthly">
+
+        <!-- Optional metadata inputs (hidden) -->
+        <input type="hidden" id="form-customer-name" value="">
+        <input type="hidden" id="form-customer-email" value="">
+
+        <!-- Service / Plan Name -->
+        <div>
+          <label for="form-name" class="block text-xs font-bold text-[#22251F] mb-1">Service / Plan Name <span class="text-[#FF6B4A]">*</span></label>
+          <input 
+            type="text" 
+            id="form-name" 
+            required 
+            placeholder="e.g. Netflix Premium, Spotify Family, Gym Pass" 
+            class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+          >
+          <span id="err-name" class="text-[11px] text-[#FF6B4A] hidden mt-1">Please enter a valid service name.</span>
+        </div>
+
+        <!-- Frequency Chips (Upgraded UI per Section 5) -->
+        <div>
+          <label class="block text-xs font-bold text-[#22251F] mb-1.5">Billing Frequency <span class="text-[#FF6B4A]">*</span></label>
+          <div class="grid grid-cols-4 gap-2" id="frequency-chips-container">
+            <button type="button" onclick="selectFrequencyChip('monthly')" id="chip-monthly" class="freq-chip active py-2 px-3 rounded-xl text-xs font-semibold text-center">Monthly</button>
+            <button type="button" onclick="selectFrequencyChip('yearly')" id="chip-yearly" class="freq-chip py-2 px-3 rounded-xl text-xs font-semibold text-center">Yearly</button>
+            <button type="button" onclick="selectFrequencyChip('quarterly')" id="chip-quarterly" class="freq-chip py-2 px-3 rounded-xl text-xs font-semibold text-center">Quarterly</button>
+            <button type="button" onclick="selectFrequencyChip('weekly')" id="chip-weekly" class="freq-chip py-2 px-3 rounded-xl text-xs font-semibold text-center">Weekly</button>
+          </div>
+        </div>
+
+        <!-- Amount & Live Dynamic Cost Preview (Upgraded UI) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="form-amount" class="block text-xs font-bold text-[#22251F] mb-1">Amount (₹ INR) <span class="text-[#FF6B4A]">*</span></label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#6B7163]">₹</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0.01" 
+                id="form-amount" 
+                required 
+                oninput="updateLiveCostPreview()"
+                placeholder="649.00" 
+                class="w-full pl-8 pr-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+              >
+            </div>
+            <span id="err-amount" class="text-[11px] text-[#FF6B4A] hidden mt-1">Amount must be greater than 0.</span>
+          </div>
+
+          <!-- Dynamic Live Cost Preview Pill -->
+          <div>
+            <span class="block text-xs font-bold text-[#6B7163] mb-1">Calculated Outflow Preview</span>
+            <div id="live-cost-preview" class="px-4 py-2.5 bg-[#F7F8F4] border border-[#E7E9E1] rounded-xl text-xs font-bold text-[#22251F] flex items-center justify-between">
+              <span class="text-[#6B7163]">Equivalent:</span>
+              <span id="live-cost-preview-val" class="text-[#FF6B4A]">₹0/mo • ₹0/yr</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category & Next Renewal Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="form-category" class="block text-xs font-bold text-[#22251F] mb-1">Category <span class="text-[#FF6B4A]">*</span></label>
+            <select id="form-category" required class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm font-semibold focus:outline-none focus:border-[#FF6B4A] transition-colors">
+              <option value="Entertainment">Entertainment</option>
+              <option value="Health & Fitness">Health & Fitness</option>
+              <option value="Software">Software</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Education">Education</option>
+              <option value="Media">Media</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="form-renewal-date" class="block text-xs font-bold text-[#22251F] mb-1">Next Renewal Date <span class="text-[#FF6B4A]">*</span></label>
+            <input 
+              type="date" 
+              id="form-renewal-date" 
+              required 
+              class="w-full px-4 py-2 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+            >
+            <span id="err-renewal-date" class="text-[11px] text-[#FF6B4A] hidden mt-1">Please select a valid date.</span>
+          </div>
+        </div>
+
+        <!-- Payment Method & Status -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="form-payment-method" class="block text-xs font-bold text-[#22251F] mb-1">Payment Method</label>
+            <select id="form-payment-method" class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm font-semibold focus:outline-none focus:border-[#FF6B4A] transition-colors">
+              <option value="Credit Card">Credit Card</option>
+              <option value="UPI AutoPay">UPI AutoPay</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Net Banking">Net Banking</option>
+              <option value="Apple / Google Pay">Apple / Google Pay</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="form-status" class="block text-xs font-bold text-[#22251F] mb-1">Status <span class="text-[#FF6B4A]">*</span></label>
+            <select id="form-status" required class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm font-semibold focus:outline-none focus:border-[#FF6B4A] transition-colors">
+              <option value="active">Active</option>
+              <option value="trial">Trial (Free / Promo)</option>
+              <option value="paused">Paused</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Optional: Last Used Date & Notes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="form-last-used" class="block text-xs font-bold text-[#22251F] mb-1">
+              Last Used Date <span class="text-[10px] text-[#6B7163] font-normal">(for leak detection)</span>
+            </label>
+            <input 
+              type="date" 
+              id="form-last-used" 
+              class="w-full px-4 py-2 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+            >
+          </div>
+
+          <div>
+            <label for="form-notes" class="block text-xs font-bold text-[#22251F] mb-1">Notes / Plan Details</label>
+            <input 
+              type="text" 
+              id="form-notes" 
+              placeholder="e.g. 4K Family plan, work expensed" 
+              class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#E7E9E1] rounded-xl text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+            >
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-[#E7E9E1]">
+          <button type="button" onclick="closeSubscriptionModal()" class="px-5 py-2.5 rounded-xl font-bold text-xs text-[#6B7163] hover:text-[#22251F] hover:bg-[#F7F8F4] transition-all">
+            Cancel
+          </button>
+          <button type="submit" id="btn-save-sub" class="px-6 py-2.5 bg-[#FF6B4A] hover:bg-[#E85837] text-white font-bold text-xs rounded-xl shadow-md shadow-[#FF6B4A]/25 transition-all btn-press flex items-center space-x-2">
+            <span id="save-btn-text">Save Subscription</span>
+            <div id="save-btn-spinner" class="hidden w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- ==================== MODAL: ACCOUNT SWITCHER & SESSION ==================== -->
+  <div id="account-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="acc-modal-title">
+    <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeAccountModal()"></div>
+    <div class="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl z-10 animate-fade-scale overflow-hidden my-8 space-y-5">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#CBDAD8]/60">
+        <div>
+          <h3 id="acc-modal-title" class="text-lg font-extrabold text-[#253536]">User Accounts</h3>
+          <p class="text-xs text-[#718482] mt-0.5">Switch active profile or add a new account</p>
+        </div>
+        <button onclick="closeAccountModal()" class="w-8 h-8 rounded-full bg-[#F0F4F4] text-[#718482] hover:text-[#253536] flex items-center justify-center" aria-label="Close dialog">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Accounts List Container -->
+      <div id="account-list-container" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Actions -->
+      <div class="space-y-2 pt-2 border-t border-[#CBDAD8]/60">
+        <button onclick="openAddAccountModal()" class="w-full py-2.5 px-4 bg-[#FFF0E5] hover:bg-[#FFE0CB] text-[#FF873D] text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 btn-press">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Add New Account</span>
+        </button>
+
+        <button onclick="handleLogout()" class="w-full py-2.5 px-4 bg-[#F6E6E6] hover:bg-[#F0D5D5] text-[#8C2424] text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 btn-press">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Log Out of QuietLeak</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD NEW ACCOUNT ==================== -->
+  <div id="add-account-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="add-acc-title">
+    <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeAddAccountModal()"></div>
+    <div class="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl z-10 animate-fade-scale overflow-hidden my-8 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#CBDAD8]/60">
+        <div>
+          <h3 id="add-acc-title" class="text-lg font-extrabold text-[#253536]">Add New Account</h3>
+          <p class="text-xs text-[#718482] mt-0.5">Create a separate financial profile</p>
+        </div>
+        <button onclick="closeAddAccountModal()" class="w-8 h-8 rounded-full bg-[#F0F4F4] text-[#718482] hover:text-[#253536] flex items-center justify-center" aria-label="Close dialog">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="add-account-form" onsubmit="handleAddAccountSubmit(event)" class="space-y-4">
+        <div>
+          <label for="new-acc-name" class="block text-xs font-bold text-[#253536] mb-1">Account / Profile Name <span class="text-[#FF873D]">*</span></label>
+          <input type="text" id="new-acc-name" required placeholder="e.g. Khush Work, Family Pass, Acme LLC" class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#CBDAD8]/80 rounded-xl text-sm focus:outline-none focus:border-[#FF873D]">
+        </div>
+
+        <div>
+          <label for="new-acc-email" class="block text-xs font-bold text-[#253536] mb-1">Email Address <span class="text-[#FF873D]">*</span></label>
+          <input type="email" id="new-acc-email" required placeholder="e.g. work@example.com" class="w-full px-4 py-2.5 bg-[#FFF9F2] border border-[#CBDAD8]/80 rounded-xl text-sm focus:outline-none focus:border-[#FF873D]">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="new-acc-role" class="block text-xs font-bold text-[#253536] mb-1">Account Role</label>
+            <select id="new-acc-role" class="w-full px-3 py-2.5 bg-[#FFF9F2] border border-[#CBDAD8]/80 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#FF873D]">
+              <option value="Personal Account">Personal</option>
+              <option value="Work & Business">Work & Business</option>
+              <option value="Family Hub">Family Hub</option>
+              <option value="Freelance & Consulting">Freelance</option>
+            </select>
+          </div>
+          <div>
+            <label for="new-acc-currency" class="block text-xs font-bold text-[#253536] mb-1">Currency</label>
+            <select id="new-acc-currency" class="w-full px-3 py-2.5 bg-[#FFF9F2] border border-[#CBDAD8]/80 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#FF873D]">
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2.5 pt-3 border-t border-[#CBDAD8]/60">
+          <button type="button" onclick="closeAddAccountModal()" class="px-4 py-2 text-xs font-bold text-[#718482] hover:bg-[#F0F4F4] rounded-xl transition-all">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-[#124E52] hover:bg-[#0E3B3E] text-white text-xs font-extrabold rounded-xl transition-all btn-press shadow-xs">
+            Create & Switch
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: WELCOME & SIGN IN ==================== -->
+  <div id="login-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
+    <div class="fixed inset-0 modal-backdrop transition-opacity"></div>
+    <div class="relative bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-scale text-center space-y-5 my-8">
+      <div id="login-pip-container" class="w-20 h-20 mx-auto flex items-center justify-center select-none">
+        <!-- Pip waving/happy injected here -->
+      </div>
+      <div>
+        <h3 id="login-modal-title" class="text-xl font-extrabold text-[#124E52]">Welcome to QuietLeak</h3>
+        <p class="text-xs text-[#718482] mt-1">Select an account profile to continue</p>
+      </div>
+
+      <div id="login-accounts-list" class="space-y-2 text-left">
+        <!-- Injected via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-[#CBDAD8]/60">
+        <button onclick="openAddAccountModal(); closeLoginModal();" class="w-full py-2 px-3 text-xs font-bold text-[#FF873D] hover:bg-[#FFF0E5] rounded-xl transition-all flex items-center justify-center space-x-1.5">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Create New Account</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: DELETE CONFIRMATION ==================== -->
+  <div id="delete-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="fixed inset-0 modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="relative bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl z-10 animate-fade-scale text-center space-y-4">
+      <div class="w-14 h-14 rounded-2xl bg-[#FFEFEA] text-[#FF6B4A] flex items-center justify-center mx-auto">
+        <i data-lucide="trash-2" class="w-7 h-7"></i>
+      </div>
+      <div>
+        <h3 id="delete-modal-title" class="text-lg font-extrabold text-[#22251F]">Delete Subscription?</h3>
+        <p class="text-xs text-[#6B7163] mt-1 leading-relaxed" id="delete-modal-msg">
+          Are you sure you want to stop tracking this record?
+        </p>
+      </div>
+      <div class="flex items-center justify-center space-x-3 pt-2">
+        <button onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl font-bold text-xs bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F]">
+          Cancel
+        </button>
+        <button id="btn-confirm-delete" onclick="executeDelete()" class="flex-1 py-2.5 rounded-xl font-bold text-xs bg-[#FF6B4A] text-white hover:bg-[#E85837] shadow-sm btn-press">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SIGNATURE DELIGHT: DISCOVERY MOMENT & AUDIT MODAL ==================== -->
+  <div id="discovery-audit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="discovery-modal-title">
+    <div class="fixed inset-0 modal-backdrop" onclick="closeDiscoveryModal()"></div>
+    
+    <div class="relative bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-scale overflow-hidden max-h-[90vh] flex flex-col justify-between">
+      
+      <!-- Discovery Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#E7E9E1]">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#FFEFEA] text-[#FF6B4A] flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="discovery-modal-title" class="text-lg font-extrabold text-[#22251F]">Let's see where your money is going</h3>
+            <p id="discovery-modal-subtitle" class="text-xs text-[#6B7163]">Auditing your tracked subscriptions for silent leakages</p>
+          </div>
+        </div>
+        <button onclick="closeDiscoveryModal()" class="w-8 h-8 rounded-full bg-[#F7F8F4] text-[#6B7163] hover:text-[#22251F] flex items-center justify-center" aria-label="Close discovery audit">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Discovery Modal Body (Switches between Animation Sequence and Reveal Findings) -->
+      <div class="py-6 overflow-y-auto space-y-6 flex-1">
+        
+        <!-- PHASE A: Animated Stepper Sequence with Pip Detective -->
+        <div id="discovery-sequence-view" class="space-y-6">
+          <div class="space-y-3 text-center max-w-md mx-auto">
+            <div id="discovery-pip-container" class="w-24 h-24 mx-auto flex items-center justify-center relative select-none">
+              <!-- Pip animated pose injected dynamically per step -->
+            </div>
+            <h4 class="text-base font-extrabold text-[#22251F]" id="discovery-active-status">Scanning your recurring records...</h4>
+            <p class="text-xs text-[#6B7163]">Pip is inspecting renewal dates, activity history, and category outliers.</p>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="space-y-1.5 max-w-md mx-auto">
+            <div class="w-full h-2.5 rounded-full bg-[#E7E9E1] overflow-hidden">
+              <div id="discovery-progress-fill" class="h-full rounded-full bg-[#FF6B4A] transition-all duration-500" style="width: 10%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-bold text-[#6B7163]">
+              <span id="discovery-progress-step-text">Step 1 of 4</span>
+              <span id="discovery-progress-percent">25%</span>
+            </div>
+          </div>
+
+          <!-- 4 Audit Checklist Steps -->
+          <div class="space-y-3 max-w-md mx-auto" id="discovery-steps-list">
+            <div id="audit-step-1" class="flex items-center space-x-3 p-3 rounded-2xl bg-[#F7F8F4] border border-[#E7E9E1] text-xs font-semibold">
+              <div class="step-icon w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#FF6B4A] shadow-xs">
+                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+              </div>
+              <span class="text-[#22251F]">Reviewing recurring expenses & commitments...</span>
+            </div>
+
+            <div id="audit-step-2" class="flex items-center space-x-3 p-3 rounded-2xl bg-white border border-[#E7E9E1]/60 text-xs font-semibold text-[#6B7163]">
+              <div class="step-icon w-6 h-6 rounded-full bg-[#F7F8F4] flex items-center justify-center text-[#6B7163]">
+                <span class="text-[10px]">2</span>
+              </div>
+              <span>Checking upcoming renewals & billing cycles...</span>
+            </div>
+
+            <div id="audit-step-3" class="flex items-center space-x-3 p-3 rounded-2xl bg-white border border-[#E7E9E1]/60 text-xs font-semibold text-[#6B7163]">
+              <div class="step-icon w-6 h-6 rounded-full bg-[#F7F8F4] flex items-center justify-center text-[#6B7163]">
+                <span class="text-[10px]">3</span>
+              </div>
+              <span>Looking for subscriptions marked unused...</span>
+            </div>
+
+            <div id="audit-step-4" class="flex items-center space-x-3 p-3 rounded-2xl bg-white border border-[#E7E9E1]/60 text-xs font-semibold text-[#6B7163]">
+              <div class="step-icon w-6 h-6 rounded-full bg-[#F7F8F4] flex items-center justify-center text-[#6B7163]">
+                <span class="text-[10px]">4</span>
+              </div>
+              <span>Calculating non-overlapping potential savings...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHASE B: The Discovery Reveal with Pip Celebration -->
+        <div id="discovery-reveal-view" class="hidden space-y-6">
+          
+          <!-- Summary Banner with Pip Celebrating -->
+          <div class="card-lime-banner p-6 text-center space-y-2 shadow-md shadow-[#124E52]/20 relative overflow-hidden text-white">
+            <div id="discovery-reveal-pip-container" class="w-20 h-20 mx-auto mb-1 flex items-center justify-center select-none">
+              <!-- Pip celebrating/detective SVG injected here -->
+            </div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-[#A8DDD0]">Discovery Results</span>
+            <h4 class="text-2xl font-extrabold text-white" id="reveal-summary-title">We found 0 expenses worth a second look.</h4>
+            <div class="flex items-center justify-center gap-4 pt-1 font-bold">
+              <span class="text-sm text-white" id="reveal-monthly-stat">Potential savings: ₹0/mo</span>
+              <span class="text-sm text-white/70">•</span>
+              <span class="text-sm text-[#FF873D]" id="reveal-annual-stat">₹0/year</span>
+            </div>
+          </div>
+
+          <!-- Staggered Findings Cards -->
+          <div class="space-y-3" id="reveal-findings-list">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Discovery Footer Actions -->
+      <div class="pt-4 border-t border-[#E7E9E1] flex items-center justify-between">
+        <button onclick="closeDiscoveryModal()" class="px-4 py-2 text-xs font-bold text-[#6B7163] hover:text-[#22251F]">
+          Close Audit
+        </button>
+        <button id="btn-discovery-finish" onclick="finishDiscoveryAudit()" class="hidden px-5 py-2.5 bg-[#22251F] text-white hover:bg-black font-bold text-xs rounded-xl transition-all btn-press">
+          View in Subscriptions →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2 pointer-events-none" aria-live="polite" aria-atomic="true">
+    <!-- Toasts injected here -->
+  </div>
+
+  <!-- Vanilla JS Application Engine -->
+  <script src="js/app.js"></script>
+</body>
+</html>

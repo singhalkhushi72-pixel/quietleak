@@ -1,0 +1,802 @@
+/* 
+  QuietLeak Design System Stylesheet — Deep Teal & Tangerine
+  Creative Direction:
+    - 80% Premium Fintech Product Design, 20% Playful Personality
+    - Deep Teal: #124E52 (primary brand anchor, navigation, headings, dark feature sections)
+    - Tangerine: #FF873D (primary CTA, active states, highlights, important interactions)
+    - Warm Cream: #FFF5E8 (main background and soft surfaces)
+    - Mint: #A8DDD0 (positive financial indicators, supporting chart segments)
+    - Charcoal: #253536 (primary text and high-contrast typography)
+    - White: #FFFFFF (clean elevated cards)
+    - Muted Grey-Green: #718482 (secondary text, labels)
+    - Soft Peach: #FFE0CB (warm chart fills, accents, illustration details)
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --color-deep-teal: #124E52;
+  --color-deep-teal-dark: #0B3639;
+  --color-deep-teal-light: #E8F3F1;
+  --color-tangerine: #FF873D;
+  --color-tangerine-hover: #E86E24;
+  --color-tangerine-light: #FFF0E5;
+  --color-warm-cream: #FFF5E8;
+  --color-mint: #A8DDD0;
+  --color-mint-light: #E9F7F4;
+  --color-mint-dark: #1E6659;
+  --color-charcoal: #253536;
+  --color-muted-grey: #718482;
+  --color-soft-peach: #FFE0CB;
+  --color-soft-grey: #E7E9E1;
+  --color-soft-grey-light: #F7F8F4;
+  --color-white: #FFFFFF;
+
+  /* Legacy aliases for backward compatibility with previous suites */
+  --color-warm-ivory: #FFF5E8;
+  --color-coral: #FF873D;
+  --color-lime: #A8DDD0;
+  --color-lavender: #FFE0CB;
+  --color-dark-ink: #253536;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-warm-cream);
+  color: var(--color-charcoal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-warm-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBDAD8;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A0B5B2;
+}
+
+/* Accessible focus outlines */
+*:focus-visible {
+  outline: 2px solid var(--color-tangerine);
+  outline-offset: 2px;
+}
+
+/* Soft Cards & Elevated Surfaces */
+.card-soft {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(18, 78, 82, 0.1);
+  box-shadow: 0 4px 20px -2px rgba(37, 53, 54, 0.05), 0 2px 6px -1px rgba(37, 53, 54, 0.02);
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-soft:hover {
+  box-shadow: 0 10px 25px -4px rgba(18, 78, 82, 0.08), 0 4px 10px -2px rgba(37, 53, 54, 0.03);
+}
+
+.card-coral-glow {
+  background-color: #FFFFFF;
+  border: 1.5px solid rgba(255, 135, 61, 0.3);
+  box-shadow: 0 8px 24px -4px rgba(255, 135, 61, 0.15);
+  border-radius: 1.25rem;
+}
+
+/* Deep Teal & Mint Savings Banner */
+.card-lime-banner {
+  background: linear-gradient(135deg, #124E52 0%, #0B3639 100%);
+  color: #FFFFFF;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(168, 221, 208, 0.2);
+}
+
+/* ==================== PIP MASCOT ANIMATIONS ==================== */
+@keyframes pipFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes pipShadowScale {
+  0%, 100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 0.22;
+  }
+  50% {
+    transform: scaleX(0.85) scaleY(0.7);
+    opacity: 0.1;
+  }
+}
+
+@keyframes pipBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-16px) scale(1.05, 0.95);
+  }
+  50% {
+    transform: translateY(0) scale(0.95, 1.05);
+  }
+  70% {
+    transform: translateY(-6px) scale(1.02, 0.98);
+  }
+}
+
+@keyframes pipWiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes speechBubblePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+  }
+  70% {
+    transform: scale(1.03) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes sparkleSpin {
+  0% {
+    transform: rotate(0deg) scale(0.8);
+    opacity: 0.4;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(0.8);
+    opacity: 0.4;
+  }
+}
+
+@keyframes coinBob {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-10px) rotate(6deg);
+  }
+}
+
+.pip-floating {
+  animation: pipFloat 3.6s ease-in-out infinite;
+}
+
+.pip-shadow {
+  animation: pipShadowScale 3.6s ease-in-out infinite;
+}
+
+.pip-bouncing {
+  animation: pipBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pip-wiggle {
+  animation: pipWiggle 0.6s ease-in-out;
+}
+
+.pip-interactive {
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+}
+.pip-interactive:hover {
+  transform: scale(1.06) translateY(-4px);
+  filter: drop-shadow(0 8px 18px rgba(255, 135, 61, 0.35));
+}
+.pip-interactive:active {
+  transform: scale(0.96);
+}
+
+/* Speech Bubble Component */
+.pip-speech-bubble {
+  position: relative;
+  background-color: #FFFFFF;
+  color: #253536;
+  border: 1.5px solid rgba(18, 78, 82, 0.18);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 24px -4px rgba(18, 78, 82, 0.08);
+  animation: speechBubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.pip-speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  right: 28px;
+  width: 16px;
+  height: 16px;
+  background-color: #FFFFFF;
+  border-right: 1.5px solid rgba(18, 78, 82, 0.18);
+  border-bottom: 1.5px solid rgba(18, 78, 82, 0.18);
+  transform: rotate(45deg);
+}
+
+.pip-speech-bubble-left::before {
+  right: auto;
+  left: 28px;
+}
+
+/* Hero Section Layered Background with Mint and Peach orbs */
+.hero-gradient-canvas {
+  background: radial-gradient(circle at 85% 25%, rgba(168, 221, 208, 0.45) 0%, transparent 55%),
+              radial-gradient(circle at 15% 85%, rgba(255, 224, 203, 0.5) 0%, transparent 50%),
+              #FFFFFF;
+  border: 1.5px solid rgba(18, 78, 82, 0.12);
+  border-radius: 2rem;
+}
+
+/* Audit CTA Magnifying Glass Effect */
+.cta-magnify {
+  position: relative;
+  overflow: hidden;
+}
+.cta-magnify i {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cta-magnify:hover i {
+  transform: rotate(15deg) scale(1.2);
+}
+
+.animate-sparkle {
+  animation: sparkleSpin 4s linear infinite;
+}
+
+.animate-coin {
+  animation: coinBob 3s ease-in-out infinite;
+}
+
+/* Interactive transitions */
+.btn-press {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Keyframe animations */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-scale {
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered list reveals */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* Micro-interaction pulses */
+.pulse-skeleton {
+  background: linear-gradient(90deg, #F0F4F3 25%, #E5ECEB 50%, #F0F4F3 75%);
+  background-size: 200% 100%;
+  animation: pulseLoading 1.5s infinite;
+}
+
+@keyframes pulseLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Button & Nav link hover micro-interactions */
+.nav-item {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-item:active {
+  transform: scale(0.98);
+}
+
+/* Toast animations */
+.toast-enter {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  background-color: rgba(18, 78, 82, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Confetti Canvas */
+#celebration-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Status Badges */
+.badge-active {
+  background-color: #E9F7F4;
+  color: #1E6659;
+}
+
+.badge-trial {
+  background-color: #FFF0E5;
+  color: #E86E24;
+}
+
+.badge-paused {
+  background-color: #F0F4F3;
+  color: #718482;
+}
+
+.badge-cancelled {
+  background-color: #FDE8E8;
+  color: #C53030;
+}
+
+/* Chart bars */
+.chart-bar-fill {
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Frequency Selectable Chips */
+.freq-chip {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1.5px solid #E7E9E1;
+  background-color: #FFFFFF;
+  color: #718482;
+}
+.freq-chip:hover {
+  border-color: #FF873D;
+  color: #253536;
+}
+.freq-chip.active {
+  border-color: #FF873D;
+  background-color: #FFF0E5;
+  color: #FF873D;
+  font-weight: 700;
+  box-shadow: 0 2px 8px -1px rgba(255, 135, 61, 0.22);
+}
+
+/* Simulator check card */
+.simulator-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.simulator-card.selected {
+  border-color: #124E52;
+  background-color: #E9F7F4;
+  box-shadow: 0 4px 14px -2px rgba(168, 221, 208, 0.35);
+}
+
+/* Interactive Donut Chart Styling */
+.donut-slice {
+  cursor: pointer;
+  transition: stroke-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, filter 0.25s ease;
+  transform-origin: center;
+}
+.donut-slice:hover,
+.donut-slice.active {
+  stroke-width: 26px !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 6px 14px rgba(18, 78, 82, 0.25));
+}
+.donut-slice.dimmed {
+  opacity: 0.3;
+}
+
+.donut-legend-pill {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.donut-legend-pill:hover,
+.donut-legend-pill.active {
+  background-color: #FFFFFF;
+  border-color: #124E52;
+  box-shadow: 0 4px 14px -2px rgba(18, 78, 82, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Timeline Components */
+.timeline-card {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.timeline-card:hover {
+  transform: translateY(-2px);
+  border-color: #FF873D;
+  box-shadow: 0 6px 20px -3px rgba(255, 135, 61, 0.18);
+}
+
+/* Savings Before-vs-After Comparison Visualizer */
+.savings-bar-container {
+  height: 24px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: #E7E9E1;
+  display: flex;
+}
+.savings-bar-retained {
+  background-color: #124E52;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.savings-bar-saved {
+  background: linear-gradient(90deg, #FF873D 0%, #FFA366 100%);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+/* Tooltip bubble */
+.tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  cursor: help;
+}
+.tooltip-bubble {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background-color: #124E52;
+  color: #FFF5E8;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(18, 78, 82, 0.25);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 40;
+  pointer-events: none;
+}
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #124E52 transparent transparent transparent;
+}
+.tooltip-trigger:hover .tooltip-bubble,
+.tooltip-trigger:focus .tooltip-bubble {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pip-floating,
+  .pip-shadow,
+  .pip-bouncing,
+  .pip-wiggle,
+  .animate-sparkle,
+  .animate-coin,
+  .animate-drip {
+    animation: none !important;
+  }
+  #celebration-canvas {
+    display: none !important;
+  }
+}
+
+/* ==================== DARK THEME SYSTEM ==================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+body.dark {
+  background-color: #0B191B !important;
+  color: #E6EFF0 !important;
+}
+
+/* Dark mode custom scrollbar */
+html.dark ::-webkit-scrollbar-track {
+  background: #0B191B;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #1C383D;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #254B52;
+}
+
+/* Headers & Navigation */
+html.dark header {
+  background-color: rgba(13, 27, 30, 0.96) !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+
+html.dark nav {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+
+html.dark .nav-item {
+  color: #8DA3A1 !important;
+}
+
+html.dark .nav-item:hover {
+  background-color: #173236 !important;
+  color: #E6EFF0 !important;
+}
+
+html.dark .nav-item.active,
+html.dark #nav-btn-dashboard.active,
+html.dark #nav-btn-subscriptions.active,
+html.dark #nav-btn-insights.active,
+html.dark #nav-btn-profile.active {
+  background-color: #124E52 !important;
+  color: #FFFFFF !important;
+}
+
+/* Cards & Elevated Surfaces */
+html.dark .card-soft {
+  background-color: #132629 !important;
+  border: 1px solid rgba(168, 221, 208, 0.12) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+  color: #E6EFF0 !important;
+}
+
+html.dark .card-soft:hover {
+  border-color: rgba(168, 221, 208, 0.22) !important;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.65) !important;
+}
+
+html.dark .card-coral-glow {
+  background-color: #132629 !important;
+  border-color: rgba(255, 135, 61, 0.4) !important;
+  box-shadow: 0 8px 24px -4px rgba(255, 135, 61, 0.2) !important;
+}
+
+html.dark .hero-gradient-canvas {
+  background: radial-gradient(circle at 85% 25%, rgba(18, 78, 82, 0.45) 0%, transparent 55%),
+              radial-gradient(circle at 15% 85%, rgba(255, 135, 61, 0.12) 0%, transparent 50%),
+              #132629 !important;
+  border-color: rgba(168, 221, 208, 0.14) !important;
+}
+
+/* Speech bubbles */
+html.dark .pip-speech-bubble {
+  background-color: #183337 !important;
+  color: #E6EFF0 !important;
+  border-color: rgba(168, 221, 208, 0.22) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .pip-speech-bubble::before {
+  background-color: #183337 !important;
+  border-right-color: rgba(168, 221, 208, 0.22) !important;
+  border-bottom-color: rgba(168, 221, 208, 0.22) !important;
+}
+
+/* Dark Form Controls */
+html.dark input[type="text"],
+html.dark input[type="number"],
+html.dark input[type="date"],
+html.dark input[type="search"],
+html.dark select,
+html.dark textarea {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.2) !important;
+  color: #E6EFF0 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #637B79 !important;
+}
+
+html.dark select option {
+  background-color: #132629 !important;
+  color: #E6EFF0 !important;
+}
+
+/* Tables */
+html.dark table thead th {
+  background-color: #0E2023 !important;
+  color: #8DA3A1 !important;
+  border-color: rgba(168, 221, 208, 0.1) !important;
+}
+
+html.dark table tbody tr {
+  border-color: rgba(168, 221, 208, 0.08) !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: #173236 !important;
+}
+
+/* Modals */
+html.dark .modal-content,
+html.dark [id$="-modal"] .bg-white {
+  background-color: #132629 !important;
+  color: #E6EFF0 !important;
+  border: 1px solid rgba(168, 221, 208, 0.15) !important;
+}
+
+html.dark .modal-backdrop {
+  background-color: rgba(5, 14, 16, 0.82) !important;
+}
+
+/* Donut Chart SVG Center & Track */
+html.dark .donut-center-circle {
+  fill: #132629 !important;
+}
+html.dark .donut-track-circle {
+  stroke: #183136 !important;
+}
+html.dark svg circle[fill="#FFFFFF"] {
+  fill: #132629 !important;
+}
+html.dark svg circle[stroke="#F0F4F4"] {
+  stroke: #183136 !important;
+}
+html.dark text#donut-center-amount {
+  fill: #E6EFF0 !important;
+}
+html.dark text#donut-center-sub {
+  fill: #8DA3A1 !important;
+}
+
+/* Donut chart legend & timeline */
+html.dark .donut-legend-pill {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+
+html.dark .donut-legend-pill:hover,
+html.dark .donut-legend-pill.active {
+  background-color: #183337 !important;
+  border-color: #FF873D !important;
+}
+
+html.dark .timeline-card {
+  background-color: #132629 !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+
+html.dark .simulator-card {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+
+html.dark .simulator-card.selected {
+  background-color: #12373A !important;
+  border-color: #A8DDD0 !important;
+}
+
+/* Frequency Chips */
+html.dark .freq-chip {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.2) !important;
+  color: #8DA3A1 !important;
+}
+
+html.dark .freq-chip:hover {
+  color: #E6EFF0 !important;
+  border-color: #FF873D !important;
+}
+
+html.dark .freq-chip.active {
+  background-color: #261D17 !important;
+  border-color: #FF873D !important;
+  color: #FF873D !important;
+}
+
+/* Dark mode theme selector cards */
+.theme-option-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.theme-option-card:hover {
+  transform: translateY(-2px);
+}
+html.dark .theme-option-card {
+  background-color: #0E2023 !important;
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+html.dark .theme-option-card.active-theme-card {
+  background-color: #183337 !important;
+  border-color: #FF873D !important;
+  box-shadow: 0 4px 16px -2px rgba(255, 135, 61, 0.25);
+}
+.theme-option-card.active-theme-card {
+  box-shadow: 0 4px 16px -2px rgba(255, 135, 61, 0.25);
+}
+
+/* Text & Surface overrides in dark mode */
+html.dark h1, html.dark h2, html.dark h3, html.dark h4 {
+  color: #E6EFF0;
+}
+html.dark .text-\[\#253536\],
+html.dark .text-\[\#22251F\] {
+  color: #E6EFF0 !important;
+}
+html.dark .text-\[\#718482\],
+html.dark .text-\[\#6B7163\] {
+  color: #8DA3A1 !important;
+}
+html.dark .text-\[\#124E52\]:not(.btn-press):not(.nav-item) {
+  color: #A8DDD0 !important;
+}
+html.dark .border-\[\#CBDAD8\],
+html.dark .border-\[\#CBDAD8\]\/60,
+html.dark .border-\[\#E7E9E1\],
+html.dark .border-\[\#E7E9E1\]\/60 {
+  border-color: rgba(168, 221, 208, 0.12) !important;
+}
+html.dark .bg-\[\#F0F4F4\],
+html.dark .bg-\[\#F7F8F4\] {
+  background-color: #0E2023 !important;
+}
+html.dark .bg-\[\#FFF5E8\],
+html.dark .bg-\[\#FFF9F2\],
+html.dark .bg-\[\#FFF0E5\] {
+  background-color: #183337 !important;
+}
+html.dark .bg-white {
+  background-color: #132629 !important;
+}
+html.dark .bg-white\/95,
+html.dark .bg-white\/90 {
+  background-color: rgba(19, 38, 41, 0.95) !important;
+}
